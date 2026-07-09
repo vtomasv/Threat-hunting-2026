@@ -73,7 +73,7 @@ MAR404-threat-hunting-2026/
 | **Programa** | Magíster en Ciberdefensa |
 | **Universidad** | Universidad Mayor |
 | **Edición** | 2026 |
-| **Duración** | 11 clases × 6 horas = 66 horas totales |
+| **Duración** | 11 clases |
 | **Modalidad** | 100% presencial |
 | **Prerrequisito** | MAR303 aprobado |
 | **Práctica** | Mínimo 60-65% del tiempo en laboratorios |
