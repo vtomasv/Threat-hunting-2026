@@ -1,0 +1,5 @@
+FROM python:3.11-slim
+LABEL description="Genera dataset de Process Injection para Lab 11"
+COPY scripts/generate_injection_dataset.py /app/generate_injection_dataset.py
+WORKDIR /app
+CMD ["python3", "generate_injection_dataset.py"]

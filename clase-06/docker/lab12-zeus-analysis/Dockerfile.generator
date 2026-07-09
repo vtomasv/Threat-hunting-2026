@@ -1,0 +1,4 @@
+FROM python:3.11-slim
+COPY scripts/generate_zeus_dataset.py /app/generate_zeus_dataset.py
+WORKDIR /app
+CMD ["python3", "generate_zeus_dataset.py"]

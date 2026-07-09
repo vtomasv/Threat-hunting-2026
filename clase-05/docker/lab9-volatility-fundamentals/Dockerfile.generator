@@ -1,0 +1,17 @@
+###############################################################################
+# Generator Container - Lab 9: Synthetic Memory Dump
+# Curso MAR404 - Clase 5
+#
+# NOTA: Como no podemos generar un memory dump real de Windows en Docker,
+# generamos un dataset JSON que simula la salida de Volatility 3.
+# El script find_evil_checker trabaja con este dataset.
+###############################################################################
+FROM python:3.11-slim
+
+LABEL description="Genera dataset simulado de análisis de memoria para Lab 9"
+
+COPY scripts/generate_memory_dataset.py /app/generate_memory_dataset.py
+
+WORKDIR /app
+
+CMD ["python3", "generate_memory_dataset.py"]

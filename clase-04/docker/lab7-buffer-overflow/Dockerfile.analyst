@@ -1,0 +1,37 @@
+###############################################################################
+# Analyst Container - Lab 7: Buffer Overflow + File Upload Detection
+# Curso MAR404 - Clase 4
+###############################################################################
+FROM ubuntu:22.04
+
+LABEL maintainer="tomas.vera@umayor.cl"
+LABEL description="Entorno de análisis para detección de buffer overflow y file upload en PCAP"
+LABEL course="MAR404 - Cacería de Amenazas - Clase 4"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tshark \
+    tcpdump \
+    python3 \
+    python3-pip \
+    ngrep \
+    hexdump \
+    binutils \
+    file \
+    xxd \
+    less \
+    vim \
+    jq \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install --no-cache-dir scapy dpkt pyshark
+
+COPY scripts/hunt_bof.sh /usr/local/bin/hunt_bof
+COPY scripts/extract_payloads.py /usr/local/bin/extract_payloads
+COPY scripts/detect_nop_sled.py /usr/local/bin/detect_nop_sled
+RUN chmod +x /usr/local/bin/hunt_bof /usr/local/bin/extract_payloads /usr/local/bin/detect_nop_sled
+
+WORKDIR /data
+
+CMD ["bash", "-c", "echo '=== LAB 7: Buffer Overflow + File Upload Detection ===' && echo 'PCAP disponible en /data/lab7_bof_upload.pcap' && echo 'Scripts: hunt_bof | extract_payloads | detect_nop_sled' && echo 'Guía: cat /scripts/README_ejercicio.md' && exec bash"]

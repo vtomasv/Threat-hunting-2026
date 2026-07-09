@@ -1,0 +1,41 @@
+###############################################################################
+# Analyst Container - Lab 9: Volatility 3 Fundamentals
+# Curso MAR404 - Clase 5
+###############################################################################
+FROM python:3.11-slim
+
+LABEL maintainer="tomas.vera@umayor.cl"
+LABEL description="Entorno de análisis de memoria con Volatility 3"
+LABEL course="MAR404 - Cacería de Amenazas - Clase 5"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    less \
+    vim \
+    jq \
+    tree \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instalar Volatility 3
+RUN pip install --no-cache-dir \
+    volatility3 \
+    yara-python \
+    pycryptodome \
+    capstone
+
+# Descargar symbol tables de Windows
+RUN mkdir -p /opt/volatility3/symbols && \
+    cd /opt/volatility3/symbols && \
+    wget -q https://downloads.volatilityfoundation.org/volatility3/symbols/windows.zip 2>/dev/null || \
+    echo "Symbols will be downloaded on first use"
+
+COPY scripts/hunt_processes.sh /usr/local/bin/hunt_processes
+COPY scripts/find_evil_checker.py /usr/local/bin/find_evil_checker
+COPY scripts/vol_cheatsheet.sh /usr/local/bin/vol_cheatsheet
+RUN chmod +x /usr/local/bin/hunt_processes /usr/local/bin/find_evil_checker /usr/local/bin/vol_cheatsheet
+
+WORKDIR /data
+
+CMD ["bash", "-c", "echo '=== LAB 9: Análisis de Procesos con Volatility 3 ===' && echo 'Memory dump: /data/win10_compromised.raw' && echo 'Scripts: hunt_processes | find_evil_checker | vol_cheatsheet' && echo 'Guía: cat /scripts/README_ejercicio.md' && exec bash"]

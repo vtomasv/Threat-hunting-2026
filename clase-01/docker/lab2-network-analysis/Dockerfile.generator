@@ -1,0 +1,16 @@
+###############################################################################
+# PCAP Generator - Genera tráfico C2 beaconing sintético
+# Curso MAR404 - Clase 1 - Lab 2
+###############################################################################
+FROM python:3.11-slim
+
+LABEL maintainer="tomas.vera@umayor.cl"
+LABEL description="Genera PCAP sintético con tráfico C2 beaconing para ejercicios de hunting"
+
+RUN pip install --no-cache-dir scapy
+
+COPY scripts/generate_c2_pcap.py /app/generate_c2_pcap.py
+
+WORKDIR /app
+
+CMD ["python", "generate_c2_pcap.py"]

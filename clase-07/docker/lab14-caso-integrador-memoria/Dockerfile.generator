@@ -1,0 +1,4 @@
+FROM python:3.11-slim
+COPY scripts/generate_caso_integrador.py /app/generate_caso_integrador.py
+WORKDIR /app
+CMD ["python3", "generate_caso_integrador.py"]

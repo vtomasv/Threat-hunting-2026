@@ -1,0 +1,24 @@
+###############################################################################
+# LAB 19: Forensic Artifacts Analysis
+# Curso MAR404 - Cacería de Amenazas (Threat Hunter) - Clase 10
+###############################################################################
+
+services:
+  forensic-lab:
+    build:
+      context: .
+      dockerfile: Dockerfile.forensic
+    container_name: forensic-analyst
+    stdin_open: true
+    tty: true
+    volumes:
+      - forensic-data:/evidence
+    networks:
+      - hunt-net
+
+networks:
+  hunt-net:
+    driver: bridge
+
+volumes:
+  forensic-data:

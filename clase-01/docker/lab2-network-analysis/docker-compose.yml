@@ -1,0 +1,62 @@
+###############################################################################
+# LAB 2: Threat Hunt - Network Traffic Analysis (Beaconing Detection)
+# Curso MAR404 - Cacería de Amenazas (Threat Hunter) - Clase 1
+# Universidad Mayor - 2026
+#
+# Descripción: Entorno con herramientas de análisis de red (Wireshark/tshark,
+# tcpdump, zeek) y un PCAP pre-generado con tráfico C2 beaconing para
+# ejercicios de detección de comunicaciones maliciosas.
+#
+# Uso: docker-compose up -d
+# Acceso: docker exec -it hunt-network-analyst /bin/bash
+###############################################################################
+
+
+services:
+  # Contenedor principal de análisis con todas las herramientas
+  network-analyst:
+    build:
+      context: .
+      dockerfile: Dockerfile.analyst
+    container_name: hunt-network-analyst
+    volumes:
+      - ./pcap:/pcap
+      - ./scripts:/scripts
+      - ./results:/results
+    networks:
+      - hunt-net
+    stdin_open: true
+    tty: true
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+
+  # Generador de PCAP con tráfico C2 simulado
+  pcap-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile.generator
+    container_name: hunt-pcap-generator
+    volumes:
+      - ./pcap:/pcap
+    networks:
+      - hunt-net
+
+  # Servidor C2 simulado (para demo en vivo)
+  c2-simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile.c2
+    container_name: hunt-c2-simulator
+    networks:
+      hunt-net:
+        ipv4_address: 172.20.0.100
+    ports:
+      - "8080:80"
+
+networks:
+  hunt-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24

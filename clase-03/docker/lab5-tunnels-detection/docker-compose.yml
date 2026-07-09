@@ -1,0 +1,44 @@
+
+# =============================================================================
+# MAR404 - Clase 3 - Lab 5: Detección de Túneles DNS y Exfiltración
+# =============================================================================
+# Laboratorio para detectar exfiltración de datos mediante DNS tunneling.
+# El PCAP contiene tráfico DNS normal mezclado con datos encoded en subdominios.
+#
+# Uso:
+#   docker-compose up -d
+#   docker exec -it dns-tunnel-analyst bash
+# =============================================================================
+
+services:
+  dns-tunnel-analyst:
+    build:
+      context: .
+      dockerfile: Dockerfile.analyst
+    container_name: dns-tunnel-analyst
+    hostname: hunt-dns-analyst
+    volumes:
+      - ./pcap:/pcap
+      - ./scripts:/scripts
+      - ./output:/output
+    networks:
+      - huntnet
+    tty: true
+    stdin_open: true
+
+  pcap-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile.generator
+    container_name: dns-tunnel-gen
+    volumes:
+      - ./pcap:/pcap
+      - ./scripts:/scripts
+    networks:
+      - huntnet
+    depends_on:
+      - dns-tunnel-analyst
+
+networks:
+  huntnet:
+    driver: bridge

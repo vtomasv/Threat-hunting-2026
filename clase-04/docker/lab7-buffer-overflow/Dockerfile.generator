@@ -1,0 +1,15 @@
+###############################################################################
+# Generator Container - Lab 7: Buffer Overflow + File Upload PCAP
+# Curso MAR404 - Clase 4
+###############################################################################
+FROM python:3.11-slim
+
+LABEL description="Genera PCAP con exploits de buffer overflow y file upload attacks"
+
+RUN pip install --no-cache-dir scapy
+
+COPY scripts/generate_bof_pcap.py /app/generate_bof_pcap.py
+
+WORKDIR /app
+
+CMD ["python3", "generate_bof_pcap.py"]

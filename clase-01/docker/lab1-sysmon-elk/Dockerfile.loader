@@ -1,0 +1,20 @@
+###############################################################################
+# Data Loader - Carga logs de Sysmon en Elasticsearch
+# Curso MAR404 - Clase 1 - Lab 1
+###############################################################################
+FROM python:3.11-slim
+
+LABEL maintainer="tomas.vera@umayor.cl"
+LABEL description="Carga dataset de Sysmon logs en Elasticsearch para ejercicios de Threat Hunting"
+LABEL course="MAR404 - Cacería de Amenazas"
+
+RUN pip install --no-cache-dir elasticsearch requests
+
+COPY scripts/load_sysmon_data.py /app/load_sysmon_data.py
+COPY scripts/generate_sysmon_dataset.py /app/generate_sysmon_dataset.py
+COPY scripts/setup_kibana.py /app/setup_kibana.py
+
+WORKDIR /app
+
+# Genera el dataset y lo carga en Elasticsearch
+CMD ["sh", "-c", "python generate_sysmon_dataset.py && python load_sysmon_data.py && python setup_kibana.py"]

@@ -1,0 +1,16 @@
+###############################################################################
+# C2 Simulator - Servidor HTTP que simula un C2 básico
+# Curso MAR404 - Clase 1 - Lab 2 (Demo en vivo)
+###############################################################################
+FROM python:3.11-slim
+
+LABEL maintainer="tomas.vera@umayor.cl"
+LABEL description="Simula un servidor C2 HTTP básico para demostración en vivo"
+
+COPY scripts/c2_server.py /app/c2_server.py
+
+WORKDIR /app
+
+EXPOSE 80
+
+CMD ["python", "c2_server.py"]

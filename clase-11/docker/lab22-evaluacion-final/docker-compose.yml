@@ -1,0 +1,24 @@
+###############################################################################
+# LAB 22: EVALUACIÓN FINAL - Hunting Mission
+# Curso MAR404 - Cacería de Amenazas (Threat Hunter) - Clase 11
+###############################################################################
+
+services:
+  final-exam:
+    build:
+      context: .
+      dockerfile: Dockerfile.exam
+    container_name: hunting-mission
+    stdin_open: true
+    tty: true
+    volumes:
+      - exam-data:/mission
+    networks:
+      - hunt-net
+
+networks:
+  hunt-net:
+    driver: bridge
+
+volumes:
+  exam-data:

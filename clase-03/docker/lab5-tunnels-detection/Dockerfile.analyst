@@ -1,0 +1,32 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    tshark \
+    tcpdump \
+    python3 \
+    python3-pip \
+    dnsutils \
+    net-tools \
+    less \
+    vim \
+    bc \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install --no-cache-dir \
+    scapy \
+    dpkt \
+    pandas \
+    numpy \
+    tabulate
+
+RUN mkdir -p /pcap /output /scripts
+
+COPY scripts/entropy_analyzer.py /usr/local/bin/entropy_analyzer
+COPY scripts/hunt_dns_tunnel.sh /usr/local/bin/hunt_dns
+RUN chmod +x /usr/local/bin/entropy_analyzer /usr/local/bin/hunt_dns
+
+WORKDIR /pcap
+
+CMD ["bash"]

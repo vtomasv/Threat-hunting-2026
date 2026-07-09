@@ -1,0 +1,24 @@
+###############################################################################
+# LAB 18: Sigma Rules - Escritura y Conversión
+# Curso MAR404 - Cacería de Amenazas (Threat Hunter) - Clase 9
+###############################################################################
+
+services:
+  sigma-lab:
+    build:
+      context: .
+      dockerfile: Dockerfile.sigma
+    container_name: sigma-analyst
+    stdin_open: true
+    tty: true
+    volumes:
+      - sigma-data:/data
+    networks:
+      - hunt-net
+
+networks:
+  hunt-net:
+    driver: bridge
+
+volumes:
+  sigma-data:

@@ -1,0 +1,15 @@
+###############################################################################
+# Generator Container - Lab 8: Caso Integrador PCAP
+# Curso MAR404 - Clase 4
+###############################################################################
+FROM python:3.11-slim
+
+LABEL description="Genera PCAP con incidente multi-vector completo para evaluación"
+
+RUN pip install --no-cache-dir scapy
+
+COPY scripts/generate_incident_pcap.py /app/generate_incident_pcap.py
+
+WORKDIR /app
+
+CMD ["python3", "generate_incident_pcap.py"]

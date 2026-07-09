@@ -1,0 +1,49 @@
+###############################################################################
+# LAB 11: Detección de Process Injection en Memoria
+# Curso MAR404 - Cacería de Amenazas (Threat Hunter) - Clase 6
+# Universidad Mayor - 2026
+#
+# Descripción: Dataset con 3 técnicas de inyección simultáneas:
+# 1. Classic DLL Injection en explorer.exe
+# 2. Process Hollowing en svchost.exe
+# 3. APC Injection en notepad.exe
+#
+# Uso: docker-compose up -d
+# Acceso: docker exec -it injection-analyst bash
+###############################################################################
+
+
+services:
+  analyst:
+    build:
+      context: .
+      dockerfile: Dockerfile.analyst
+    container_name: injection-analyst
+    volumes:
+      - memory-data:/data
+      - ./scripts:/scripts:ro
+    networks:
+      - lab-net
+    tty: true
+    stdin_open: true
+    depends_on:
+      generator:
+        condition: service_completed_successfully
+
+  generator:
+    build:
+      context: .
+      dockerfile: Dockerfile.generator
+    container_name: injection-generator
+    volumes:
+      - memory-data:/data
+    networks:
+      - lab-net
+
+volumes:
+  memory-data:
+    driver: local
+
+networks:
+  lab-net:
+    driver: bridge

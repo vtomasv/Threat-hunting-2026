@@ -1,0 +1,16 @@
+FROM python:3.11-slim
+LABEL description="Entorno de análisis de Zeus Botnet - Lab 12"
+LABEL course="MAR404 - Cacería de Amenazas - Clase 6"
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    less vim jq tree xxd && rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir volatility3 yara-python pycryptodome
+
+COPY scripts/zeus_detector.py /usr/local/bin/zeus_detector
+COPY scripts/hook_analyzer.py /usr/local/bin/hook_analyzer
+COPY scripts/config_extractor.py /usr/local/bin/config_extractor
+RUN chmod +x /usr/local/bin/zeus_detector /usr/local/bin/hook_analyzer /usr/local/bin/config_extractor
+
+WORKDIR /data
+CMD ["bash", "-c", "echo '=== LAB 12: Análisis de Zeus Botnet en Memoria ===' && echo 'Scripts: zeus_detector | hook_analyzer | config_extractor' && echo 'Instrucciones: cat /scripts/EJERCICIO.md' && exec bash"]

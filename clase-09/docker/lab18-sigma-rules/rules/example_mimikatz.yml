@@ -1,0 +1,32 @@
+title: Mimikatz Process Access to LSASS
+id: 0d894093-71bc-43c3-a4a0-97804b7e5db6
+status: stable
+description: Detects process access to lsass.exe with suspicious access rights
+references:
+    - https://attack.mitre.org/techniques/T1003/001/
+author: MAR404 Course
+date: 2025/07/20
+tags:
+    - attack.credential_access
+    - attack.t1003.001
+logsource:
+    category: process_access
+    product: windows
+detection:
+    selection:
+        TargetImage|endswith: '\lsass.exe'
+        GrantedAccess:
+            - '0x1010'
+            - '0x1038'
+            - '0x1410'
+            - '0x01410'
+    filter_legitimate:
+        SourceImage|endswith:
+            - '\wmiprvse.exe'
+            - '\taskmgr.exe'
+            - '\procexp64.exe'
+    condition: selection and not filter_legitimate
+falsepositives:
+    - Legitimate security tools
+    - Windows Defender
+level: critical

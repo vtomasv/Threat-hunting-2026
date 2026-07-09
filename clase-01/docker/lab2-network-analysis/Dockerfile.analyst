@@ -1,0 +1,49 @@
+###############################################################################
+# Network Analyst Workstation
+# Herramientas de análisis de tráfico de red para Threat Hunting
+# Curso MAR404 - Clase 1 - Lab 2
+###############################################################################
+FROM ubuntu:24.04
+
+LABEL maintainer="tomas.vera@umayor.cl"
+LABEL description="Estación de análisis de red con Wireshark, tcpdump, tshark y zeek"
+LABEL course="MAR404 - Cacería de Amenazas"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tshark \
+    tcpdump \
+    wireshark-common \
+    ngrep \
+    net-tools \
+    iputils-ping \
+    dnsutils \
+    curl \
+    wget \
+    python3 \
+    python3-pip \
+    jq \
+    less \
+    vim \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instalar herramientas Python para análisis
+RUN pip3 install --no-cache-dir --break-system-packages \
+    scapy \
+    dpkt \
+    pyshark \
+    pandas \
+    matplotlib
+
+# Crear directorio de trabajo
+WORKDIR /analysis
+
+# Script de ayuda para el estudiante
+COPY scripts/hunt_helper.sh /usr/local/bin/hunt-helper
+RUN chmod +x /usr/local/bin/hunt-helper
+
+# Mensaje de bienvenida
+RUN echo '#!/bin/bash\necho ""\necho "================================================"\necho "  MAR404 - Lab 2: Network Traffic Analysis"\necho "  Threat Hunting - Detección de Beaconing C2"\necho "================================================"\necho ""\necho "Herramientas disponibles:"\necho "  tshark    - Análisis de PCAP en CLI"\necho "  tcpdump   - Captura y filtrado de tráfico"\necho "  ngrep     - Búsqueda de patrones en tráfico"\necho "  python3   - Scripting con scapy/dpkt"\necho ""\necho "PCAP de ejercicio: /pcap/c2_beaconing.pcap"\necho ""\necho "Comandos útiles:"\necho "  hunt-helper        - Muestra guía de comandos"\necho "  tshark -r /pcap/c2_beaconing.pcap -q -z io,stat,60"\necho ""\n' > /etc/profile.d/welcome.sh && chmod +x /etc/profile.d/welcome.sh
+
+CMD ["/bin/bash", "--login"]

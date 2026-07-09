@@ -1,0 +1,4 @@
+FROM python:3.11-slim
+COPY scripts/generate_dll_dataset.py /app/generate_dll_dataset.py
+WORKDIR /app
+CMD ["python3", "generate_dll_dataset.py"]

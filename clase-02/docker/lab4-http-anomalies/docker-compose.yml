@@ -1,0 +1,44 @@
+
+# =============================================================================
+# MAR404 - Clase 2 - Lab 4: Análisis de Tráfico HTTP y User-Agents Anómalos
+# =============================================================================
+# Laboratorio para detectar tráfico C2 oculto en comunicaciones HTTP normales
+# mediante análisis de User-Agents y patrones de comunicación.
+#
+# Uso:
+#   docker-compose up -d
+#   docker exec -it http-analyst bash
+# =============================================================================
+
+services:
+  http-analyst:
+    build:
+      context: .
+      dockerfile: Dockerfile.analyst
+    container_name: http-analyst
+    hostname: hunt-http-analyst
+    volumes:
+      - ./pcap:/pcap
+      - ./scripts:/scripts
+      - ./output:/output
+    networks:
+      - huntnet
+    tty: true
+    stdin_open: true
+
+  pcap-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile.generator
+    container_name: http-pcap-gen
+    volumes:
+      - ./pcap:/pcap
+      - ./scripts:/scripts
+    networks:
+      - huntnet
+    depends_on:
+      - http-analyst
+
+networks:
+  huntnet:
+    driver: bridge

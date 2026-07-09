@@ -1,0 +1,51 @@
+
+# =============================================================================
+# MAR404 - Clase 2 - Lab 3: Detección de Phishing en Tráfico SMTP
+# =============================================================================
+# Este laboratorio proporciona un entorno completo para analizar tráfico SMTP
+# que contiene un email de phishing con adjunto malicioso.
+#
+# Uso:
+#   docker-compose up -d
+#   docker exec -it smtp-analyst bash
+#
+# El PCAP se genera automáticamente al iniciar el contenedor.
+# =============================================================================
+
+services:
+  # Contenedor principal de análisis
+  smtp-analyst:
+    build:
+      context: .
+      dockerfile: Dockerfile.analyst
+    container_name: smtp-analyst
+    hostname: hunt-smtp-analyst
+    volumes:
+      - ./pcap:/pcap
+      - ./scripts:/scripts
+      - ./output:/output
+    networks:
+      - huntnet
+    tty: true
+    stdin_open: true
+
+  # Generador de PCAP con tráfico SMTP (phishing + legítimo)
+  pcap-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile.generator
+    container_name: smtp-pcap-gen
+    volumes:
+      - ./pcap:/pcap
+      - ./scripts:/scripts
+    networks:
+      - huntnet
+    depends_on:
+      - smtp-analyst
+
+networks:
+  huntnet:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/24

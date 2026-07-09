@@ -1,0 +1,24 @@
+###############################################################################
+# LAB 21: Simulación APT Guiada (Warm-up)
+# Curso MAR404 - Cacería de Amenazas (Threat Hunter) - Clase 11
+###############################################################################
+
+services:
+  apt-lab:
+    build:
+      context: .
+      dockerfile: Dockerfile.apt
+    container_name: apt-hunter
+    stdin_open: true
+    tty: true
+    volumes:
+      - apt-data:/evidence
+    networks:
+      - hunt-net
+
+networks:
+  hunt-net:
+    driver: bridge
+
+volumes:
+  apt-data:

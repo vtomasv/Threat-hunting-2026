@@ -1,0 +1,51 @@
+###############################################################################
+# LAB 14: Caso Integrador de Memoria — EVALUACIÓN PARCIAL 2
+# Curso MAR404 - Cacería de Amenazas (Threat Hunter) - Clase 7
+#
+# Descripción: Análisis forense completo de memory dump con:
+# - Initial access via macro maliciosa
+# - Process Hollowing en svchost.exe
+# - Credential dumping (lsass access)
+# - Lateral movement preparation (PsExec)
+# - Data staging para exfiltración
+#
+# Uso: docker-compose up -d
+# Acceso: docker exec -it memory-forensics bash
+###############################################################################
+
+
+services:
+  analyst:
+    build:
+      context: .
+      dockerfile: Dockerfile.analyst
+    container_name: memory-forensics
+    volumes:
+      - memory-data:/data
+      - ./scripts:/scripts:ro
+      - ./plantilla:/plantilla:ro
+    networks:
+      - lab-net
+    tty: true
+    stdin_open: true
+    depends_on:
+      generator:
+        condition: service_completed_successfully
+
+  generator:
+    build:
+      context: .
+      dockerfile: Dockerfile.generator
+    container_name: memory-generator
+    volumes:
+      - memory-data:/data
+    networks:
+      - lab-net
+
+volumes:
+  memory-data:
+    driver: local
+
+networks:
+  lab-net:
+    driver: bridge

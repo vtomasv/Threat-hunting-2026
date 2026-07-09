@@ -1,0 +1,18 @@
+FROM python:3.11-slim
+LABEL description="Caso Integrador de Memoria - Evaluación Parcial 2 - Lab 14"
+LABEL course="MAR404 - Cacería de Amenazas - Clase 7"
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    less vim jq tree && rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir volatility3 yara-python pycryptodome
+
+COPY scripts/memory_hunter.py /usr/local/bin/memory_hunter
+COPY scripts/timeline_builder.py /usr/local/bin/timeline_builder
+COPY scripts/ioc_extractor.py /usr/local/bin/ioc_extractor
+COPY scripts/attack_mapper.py /usr/local/bin/attack_mapper
+RUN chmod +x /usr/local/bin/memory_hunter /usr/local/bin/timeline_builder \
+    /usr/local/bin/ioc_extractor /usr/local/bin/attack_mapper
+
+WORKDIR /data
+CMD ["bash", "-c", "echo '╔══════════════════════════════════════════════════════╗' && echo '║  EVALUACIÓN PARCIAL 2 — CASO INTEGRADOR DE MEMORIA  ║' && echo '║  Tiempo: 90 minutos                                  ║' && echo '║  Instrucciones: cat /scripts/CASO_EVALUACION.md      ║' && echo '║  Plantilla: cat /plantilla/reporte_memoria.md        ║' && echo '╚══════════════════════════════════════════════════════╝' && exec bash"]

@@ -1,0 +1,38 @@
+###############################################################################
+# Analyst Container - Lab 8: Caso Integrador Red Forense
+# Curso MAR404 - Clase 4 - EVALUACIÓN PARCIAL 1
+###############################################################################
+FROM ubuntu:22.04
+
+LABEL maintainer="tomas.vera@umayor.cl"
+LABEL description="Entorno de análisis para caso integrador de red forense"
+LABEL course="MAR404 - Cacería de Amenazas - Clase 4 - Evaluación"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tshark \
+    tcpdump \
+    python3 \
+    python3-pip \
+    ngrep \
+    hexdump \
+    binutils \
+    file \
+    xxd \
+    less \
+    vim \
+    jq \
+    dnsutils \
+    whois \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install --no-cache-dir scapy dpkt pyshark
+
+COPY scripts/timeline_builder.py /usr/local/bin/timeline_builder
+COPY scripts/ioc_extractor.py /usr/local/bin/ioc_extractor
+RUN chmod +x /usr/local/bin/timeline_builder /usr/local/bin/ioc_extractor
+
+WORKDIR /data
+
+CMD ["bash", "-c", "echo '╔══════════════════════════════════════════════════════════════╗' && echo '║  LAB 8: CASO INTEGRADOR - EVALUACIÓN PARCIAL 1 (30%)       ║' && echo '║  Incidente Multi-Vector en Red                              ║' && echo '╠══════════════════════════════════════════════════════════════╣' && echo '║  PCAP: /data/lab8_incident.pcap                             ║' && echo '║  Scripts: timeline_builder | ioc_extractor                  ║' && echo '║  Plantilla: /plantilla/reporte_forense.md                   ║' && echo '║  Instrucciones: cat /scripts/INSTRUCCIONES.md               ║' && echo '╚══════════════════════════════════════════════════════════════╝' && exec bash"]

@@ -1,0 +1,16 @@
+FROM python:3.11-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    jq vim tshark net-tools file sqlite3 && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir scapy yara-python elasticsearch
+
+COPY scripts/ /app/
+COPY plantilla/ /plantilla/
+WORKDIR /app
+
+# Generate complete APT scenario for final exam
+RUN python3 generate_final_exam.py
+
+CMD ["/bin/bash"]

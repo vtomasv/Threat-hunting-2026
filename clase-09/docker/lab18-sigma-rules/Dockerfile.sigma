@@ -1,0 +1,17 @@
+FROM python:3.11-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    jq vim nano && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir pySigma sigma-cli pySigma-backend-elasticsearch pySigma-backend-splunk pySigma-pipeline-sysmon pySigma-pipeline-windows
+
+COPY scripts/ /app/
+COPY rules/ /app/rules/
+COPY exercises/ /app/exercises/
+WORKDIR /app
+
+# Generate test events
+RUN python3 generate_test_events.py
+
+CMD ["/bin/bash"]

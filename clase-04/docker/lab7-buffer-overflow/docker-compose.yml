@@ -1,0 +1,50 @@
+###############################################################################
+# LAB 7: Detección de Buffer Overflow y File Upload en Red
+# Curso MAR404 - Cacería de Amenazas (Threat Hunter) - Clase 4
+# Universidad Mayor - 2026
+#
+# Descripción: Entorno con PCAP pre-generado que contiene tráfico normal
+# mezclado con exploits de buffer overflow y ataques de file upload.
+# Los estudiantes deben detectar los ataques usando tshark y Python.
+#
+# Uso: docker-compose up -d
+# Acceso: docker exec -it bof-analyst bash
+###############################################################################
+
+
+services:
+  # Contenedor principal de análisis
+  analyst:
+    build:
+      context: .
+      dockerfile: Dockerfile.analyst
+    container_name: bof-analyst
+    volumes:
+      - pcap-data:/data
+      - ./scripts:/scripts:ro
+    networks:
+      - lab-net
+    tty: true
+    stdin_open: true
+    depends_on:
+      generator:
+        condition: service_completed_successfully
+
+  # Generador de PCAP con ataques
+  generator:
+    build:
+      context: .
+      dockerfile: Dockerfile.generator
+    container_name: bof-generator
+    volumes:
+      - pcap-data:/data
+    networks:
+      - lab-net
+
+volumes:
+  pcap-data:
+    driver: local
+
+networks:
+  lab-net:
+    driver: bridge

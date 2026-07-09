@@ -1,0 +1,15 @@
+FROM python:3.11-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    jq vim file xxd strings binutils && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir yara-python lief pefile
+
+COPY scripts/ /app/
+WORKDIR /app
+
+# Generate forensic artifacts
+RUN python3 generate_artifacts.py
+
+CMD ["/bin/bash"]

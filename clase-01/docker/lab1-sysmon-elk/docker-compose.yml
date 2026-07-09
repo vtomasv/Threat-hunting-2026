@@ -1,0 +1,76 @@
+###############################################################################
+# LAB 1: Threat Hunt - Sysmon Logs + ELK Stack
+# Curso MAR404 - Cacería de Amenazas (Threat Hunter) - Clase 1
+# Universidad Mayor - 2026
+#
+# Descripción: Entorno pre-cargado con logs de Sysmon (Windows) indexados en
+# Elasticsearch y visualizables en Kibana. Incluye eventos benignos y 
+# actividad maliciosa inyectada para ejercicios de hunting.
+#
+# Uso: docker-compose up -d
+# Acceso Kibana: http://localhost:5601
+# Acceso Elasticsearch: http://localhost:9200
+###############################################################################
+
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+    container_name: hunt-lab-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - cluster.name=threat-hunt-lab
+    ports:
+      - "9200:9200"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    networks:
+      - hunt-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\\|yellow\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.13.0
+    container_name: hunt-lab-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - xpack.security.enabled=false
+      - server.name=hunt-lab-kibana
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - hunt-net
+
+  # Contenedor que carga los datos de Sysmon al iniciar
+  data-loader:
+    build:
+      context: .
+      dockerfile: Dockerfile.loader
+    container_name: hunt-lab-data-loader
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ES_HOST=http://elasticsearch:9200
+      - INDEX_NAME=sysmon-2026.01.15
+    volumes:
+      - ./data:/data
+    networks:
+      - hunt-net
+
+volumes:
+  es-data:
+    driver: local
+
+networks:
+  hunt-net:
+    driver: bridge

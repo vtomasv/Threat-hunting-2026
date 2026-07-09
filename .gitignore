@@ -1,0 +1,38 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker volumes and data
+**/es-data/
+**/data/
+**/results/
+
+# Generated PCAPs (se regeneran con docker-compose up)
+**/pcap/*.pcap
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+
+# Large binary files (usar Git LFS si es necesario)
+*.vmdk
+*.ova
+*.iso
+*.raw
+*.E01

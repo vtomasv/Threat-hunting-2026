@@ -1,0 +1,46 @@
+###############################################################################
+# LAB 13: DLL Injection Avanzada + Análisis de Troyano
+# Curso MAR404 - Cacería de Amenazas (Threat Hunter) - Clase 7
+#
+# Descripción: Escenario con DLL Side-Loading via OneDriveUpdater.exe
+# y troyano con keylogger, screenshot y exfiltración.
+#
+# Uso: docker-compose up -d
+# Acceso: docker exec -it dll-analyst bash
+###############################################################################
+
+
+services:
+  analyst:
+    build:
+      context: .
+      dockerfile: Dockerfile.analyst
+    container_name: dll-analyst
+    volumes:
+      - memory-data:/data
+      - ./scripts:/scripts:ro
+    networks:
+      - lab-net
+    tty: true
+    stdin_open: true
+    depends_on:
+      generator:
+        condition: service_completed_successfully
+
+  generator:
+    build:
+      context: .
+      dockerfile: Dockerfile.generator
+    container_name: dll-generator
+    volumes:
+      - memory-data:/data
+    networks:
+      - lab-net
+
+volumes:
+  memory-data:
+    driver: local
+
+networks:
+  lab-net:
+    driver: bridge

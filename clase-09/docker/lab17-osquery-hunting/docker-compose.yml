@@ -1,0 +1,24 @@
+###############################################################################
+# LAB 17: Hunting con Osquery
+# Curso MAR404 - Cacería de Amenazas (Threat Hunter) - Clase 9
+###############################################################################
+
+services:
+  osquery-lab:
+    build:
+      context: .
+      dockerfile: Dockerfile.osquery
+    container_name: osquery-hunter
+    stdin_open: true
+    tty: true
+    volumes:
+      - osquery-data:/data
+    networks:
+      - hunt-net
+
+networks:
+  hunt-net:
+    driver: bridge
+
+volumes:
+  osquery-data:

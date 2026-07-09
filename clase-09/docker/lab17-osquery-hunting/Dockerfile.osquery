@@ -1,0 +1,17 @@
+FROM python:3.11-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    sqlite3 jq curl && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY scripts/ /app/
+WORKDIR /app
+
+# Generate the simulated Osquery database
+RUN python3 generate_osquery_db.py
+
+# Create osquery-sim command
+RUN echo '#!/bin/bash\npython3 /app/osquery_sim.py "$@"' > /usr/local/bin/osqueryi && \
+    chmod +x /usr/local/bin/osqueryi
+
+CMD ["/bin/bash"]

@@ -1,0 +1,30 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    tshark \
+    tcpdump \
+    python3 \
+    python3-pip \
+    net-tools \
+    less \
+    vim \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install --no-cache-dir \
+    scapy \
+    dpkt \
+    pandas \
+    urllib3 \
+    tabulate
+
+RUN mkdir -p /pcap /output /scripts
+
+COPY scripts/hunt_web.sh /usr/local/bin/hunt_web
+COPY scripts/decode_payloads.py /usr/local/bin/decode_payloads
+RUN chmod +x /usr/local/bin/hunt_web /usr/local/bin/decode_payloads
+
+WORKDIR /pcap
+
+CMD ["bash"]

@@ -1,0 +1,16 @@
+FROM python:3.11-slim
+LABEL description="Entorno de análisis DLL Injection + Trojan - Lab 13"
+LABEL course="MAR404 - Cacería de Amenazas - Clase 7"
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    less vim jq tree && rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir volatility3 yara-python pycryptodome
+
+COPY scripts/dll_analyzer.py /usr/local/bin/dll_analyzer
+COPY scripts/trojan_profiler.py /usr/local/bin/trojan_profiler
+COPY scripts/persistence_checker.py /usr/local/bin/persistence_checker
+RUN chmod +x /usr/local/bin/dll_analyzer /usr/local/bin/trojan_profiler /usr/local/bin/persistence_checker
+
+WORKDIR /data
+CMD ["bash", "-c", "echo '=== LAB 13: DLL Injection + Trojan Analysis ===' && echo 'Scripts: dll_analyzer | trojan_profiler | persistence_checker' && echo 'Instrucciones: cat /scripts/EJERCICIO.md' && exec bash"]

@@ -1,0 +1,44 @@
+
+# =============================================================================
+# MAR404 - Clase 3 - Lab 6: Detección de Ataques Web (SQLi + Web Shell)
+# =============================================================================
+# Laboratorio para detectar una cadena de ataque web completa:
+# SQL Injection → File Upload → Web Shell Usage
+#
+# Uso:
+#   docker-compose up -d
+#   docker exec -it web-attack-analyst bash
+# =============================================================================
+
+services:
+  web-attack-analyst:
+    build:
+      context: .
+      dockerfile: Dockerfile.analyst
+    container_name: web-attack-analyst
+    hostname: hunt-web-analyst
+    volumes:
+      - ./pcap:/pcap
+      - ./scripts:/scripts
+      - ./output:/output
+    networks:
+      - huntnet
+    tty: true
+    stdin_open: true
+
+  pcap-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile.generator
+    container_name: web-attack-gen
+    volumes:
+      - ./pcap:/pcap
+      - ./scripts:/scripts
+    networks:
+      - huntnet
+    depends_on:
+      - web-attack-analyst
+
+networks:
+  huntnet:
+    driver: bridge
