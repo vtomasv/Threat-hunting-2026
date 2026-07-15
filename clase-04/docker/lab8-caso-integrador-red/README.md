@@ -121,29 +121,47 @@ tshark -r /data/lab8_incident.pcap -Y "tcp.port == 4443 && data" -T fields -e da
 
 **Comandos EXACTOS a ejecutar:**
 ```bash
-# 1. Filtrar consultas DNS inusualmente largas
-tshark -r /data/lab8_incident.pcap -Y "dns.qry.name.len > 50" -T fields -e dns.qry.name | sort | uniq -c
+# 1. Filtrar consultas DNS inusualmente largas (indicador de tunneling)
+tshark -r /data/lab8_incident.pcap -Y "dns.qry.name.len > 50" -T fields -e ip.src -e dns.qry.name | sort | uniq -c
 
-# 2. Extraer los subdominios para decodificar (ej. Base64 o Hex)
-tshark -r /data/lab8_incident.pcap -Y "dns.qry.name matches \"\\.malicious\\.com$\"" -T fields -e dns.qry.name | awk -F'.' '{print $1}'
+# 2. Identificar el dominio C2 usado para exfiltración (buscar patrón de subdominios largos)
+tshark -r /data/lab8_incident.pcap -Y "dns.qry.name contains \"evil-corp\"" -T fields -e dns.qry.name
+
+# 3. Extraer los subdominios codificados (primera parte antes del primer punto)
+tshark -r /data/lab8_incident.pcap -Y "dns.qry.name contains \"data.cdn-update.evil-corp.net\"" -T fields -e dns.qry.name | awk -F'.' '{print $1}'
+
+# 4. Decodificar los datos exfiltrados (Base32)
+tshark -r /data/lab8_incident.pcap -Y "dns.qry.name contains \"data.cdn-update.evil-corp.net\"" -T fields -e dns.qry.name | awk -F'.' '{print $1}' | python3 -c "
+import sys, base64
+for line in sys.stdin:
+    chunk = line.strip()
+    # Agregar padding Base32
+    padding = '=' * ((8 - len(chunk) % 8) % 8)
+    try:
+        decoded = base64.b32decode(chunk.upper() + padding).decode()
+        print(decoded)
+    except: pass
+"
 ```
 *Explicación de flags:*
-- `dns.qry.name.len > 50`: Filtra consultas DNS donde la longitud del nombre consultado es mayor a 50 caracteres.
-- `matches`: Permite el uso de expresiones regulares para filtrar nombres de dominio específicos.
-- `awk -F'.' '{print $1}'`: Extrae la primera parte del dominio (el subdominio que contiene los datos exfiltrados).
+- `dns.qry.name.len > 50`: Filtra consultas DNS donde la longitud del nombre es mayor a 50 caracteres (indicador de tunneling).
+- `contains`: Filtra paquetes cuyo campo contiene la cadena especificada.
+- `awk -F'.' '{print $1}'`: Extrae la primera parte del FQDN (el subdominio que contiene los datos codificados).
+- El script Python decodifica Base32 para revelar los datos exfiltrados.
 
 **Qué buscar en la salida:**
-- Múltiples consultas DNS hacia un mismo dominio raíz, donde los subdominios parecen cadenas aleatorias o codificadas (ej. Base64 o Hexadecimal).
+- Múltiples consultas DNS desde `192.168.10.20` hacia el dominio `cdn-update.evil-corp.net` con subdominios que parecen cadenas aleatorias codificadas en Base32.
+- Al decodificar, se revelan credenciales de base de datos.
 
 **Preguntas de análisis:**
 1. ¿Cuál es el dominio raíz utilizado para la exfiltración DNS?
-2. ¿Qué tipo de codificación parece estar utilizando el atacante en los subdominios?
-3. Al decodificar una de las cadenas, ¿qué tipo de información se estaba exfiltrando?
+2. ¿Qué tipo de codificación utiliza el atacante en los subdominios?
+3. Al decodificar las cadenas, ¿qué información se estaba exfiltrando?
 
 **Respuestas esperadas (Para el instructor):**
-- *Respuesta 1:* El dominio malicioso (ej. `malicious.com`).
-- *Respuesta 2:* Generalmente Base64 o Hexadecimal.
-- *Respuesta 3:* Información sensible como el contenido de `/etc/passwd`, `/etc/shadow`, o archivos de configuración.
+- *Respuesta 1:* `cdn-update.evil-corp.net` (dominio C2 para exfiltración DNS).
+- *Respuesta 2:* Base32 (caracteres alfanuméricos en minúscula sin padding).
+- *Respuesta 3:* Credenciales de la base de datos: `DB_USER=webapp;DB_PASS=Str0ng!P@ss2024;DB_HOST=192.168.10.30`.
 
 ---
 
