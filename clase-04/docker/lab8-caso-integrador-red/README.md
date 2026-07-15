@@ -69,7 +69,7 @@ tshark -r /data/lab8_incident.pcap -Y "tcp.dstport == 8080 and http.request" -T 
 2. ¿Qué puerto fue el objetivo del exploit de Buffer Overflow?
 3. ¿Qué User-Agent se utilizó en la petición HTTP maliciosa?
 
-**Respuestas esperadas:**
+**Respuestas esperadas (Para el instructor):**
 - *Respuesta 1:* La IP del atacante es (dependerá del pcap, ej. 192.168.1.100).
 - *Respuesta 2:* El puerto objetivo fue el 8080.
 - *Respuesta 3:* El User-Agent puede ser una herramienta automatizada (ej. Nmap Scripting Engine, curl, o un script de Python) o estar vacío.
@@ -84,13 +84,21 @@ tshark -r /data/lab8_incident.pcap -Y "tcp.dstport == 8080 and http.request" -T 
 # 1. Identificar conexiones salientes hacia puertos inusuales (ej. 4443)
 tshark -r /data/lab8_incident.pcap -q -z conv,tcp | grep "4443"
 
-# 2. Extraer el contenido de la sesión TCP sospechosa
-tshark -r /data/lab8_incident.pcap -Y "tcp.port == 4443" -T fields -e data.text | grep -v "^$"
+# 2. Seguir el stream TCP completo de la sesión C2 (muestra comandos en ASCII)
+tshark -r /data/lab8_incident.pcap -q -z "follow,tcp,ascii,tcp.port==4443"
+
+# 3. Alternativa: usar tcpdump para ver el contenido ASCII directamente
+tcpdump -r /data/lab8_incident.pcap -nn 'port 4443' -A
+
+# 4. Extraer solo los payloads en hex (para decodificar manualmente)
+tshark -r /data/lab8_incident.pcap -Y "tcp.port == 4443 && data" -T fields -e data
 ```
 *Explicación de flags:*
 - `-q`: Modo silencioso, no muestra el resumen de paquetes por defecto.
 - `-z conv,tcp`: Genera estadísticas de las conversaciones TCP.
-- `data.text`: Extrae el texto legible de la carga útil (payload) del paquete.
+- `-z "follow,tcp,ascii,..."`: Reconstruye y muestra el stream TCP completo en ASCII.
+- `-A` (tcpdump): Imprime cada paquete en ASCII, ideal para ver comandos de shell.
+- `data`: Campo que contiene los bytes crudos del payload TCP.
 
 **Qué buscar en la salida:**
 - Una conversación TCP de larga duración o con un volumen de datos significativo hacia el puerto 4443.
@@ -101,10 +109,10 @@ tshark -r /data/lab8_incident.pcap -Y "tcp.port == 4443" -T fields -e data.text 
 2. ¿Qué comandos ejecutó el atacante inmediatamente después de obtener la reverse shell?
 3. ¿Se descargó alguna herramienta adicional a través de este canal?
 
-**Respuestas esperadas:**
-- *Respuesta 1:* La IP del atacante y el puerto 4443.
-- *Respuesta 2:* Comandos de reconocimiento local como `id`, `uname -a`, `whoami`.
-- *Respuesta 3:* Posiblemente se observe el uso de `wget` o `curl` para descargar scripts adicionales.
+**Respuestas esperadas (Para el instructor):**
+- *Respuesta 1:* IP del atacante: 203.0.113.77, puerto C2: 4443 (reverse shell desde 192.168.10.20).
+- *Respuesta 2:* Comandos ejecutados: `id`, `whoami`, `uname -a`, `cat /etc/passwd`, `cat /var/www/html/config/database.conf` (extracción de credenciales DB).
+- *Respuesta 3:* No se descargaron herramientas adicionales; el atacante usó comandos nativos (LOTL) para reconocimiento y extracción de credenciales.
 
 ---
 
@@ -132,7 +140,7 @@ tshark -r /data/lab8_incident.pcap -Y "dns.qry.name matches \"\\.malicious\\.com
 2. ¿Qué tipo de codificación parece estar utilizando el atacante en los subdominios?
 3. Al decodificar una de las cadenas, ¿qué tipo de información se estaba exfiltrando?
 
-**Respuestas esperadas:**
+**Respuestas esperadas (Para el instructor):**
 - *Respuesta 1:* El dominio malicioso (ej. `malicious.com`).
 - *Respuesta 2:* Generalmente Base64 o Hexadecimal.
 - *Respuesta 3:* Información sensible como el contenido de `/etc/passwd`, `/etc/shadow`, o archivos de configuración.
