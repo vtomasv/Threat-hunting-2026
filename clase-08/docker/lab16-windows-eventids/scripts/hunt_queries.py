@@ -182,7 +182,15 @@ def run_query(es, name, info):
     if "aggs" in info:
         body["aggs"] = info["aggs"]
     
-    result = es.search(index=INDEX, query=body.get("query"), size=body.get("size", 50), sort=body.get("sort"))
+    search_kwargs = {
+        "index": INDEX,
+        "query": body["query"],
+        "size": body.get("size", 20),
+        "sort": body.get("sort")
+    }
+    if "aggs" in body:
+        search_kwargs["aggs"] = body["aggs"]
+    result = es.search(**search_kwargs)
     hits = result["hits"]["total"]["value"]
     
     print(f"\n  Resultados: {hits} eventos encontrados")

