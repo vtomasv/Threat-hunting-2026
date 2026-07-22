@@ -595,7 +595,7 @@ def simulate_firewall_disable(es):
 def reset_simulated(es):
     """Elimina todos los eventos simulados."""
     body = {"query": {"term": {"simulated": True}}}
-    result = es.delete_by_query(index=INDEX, body=body)
+    result = es.delete_by_query(index=INDEX, query=body["query"])
     es.indices.refresh(index=INDEX)
     return result.get("deleted", 0)
 

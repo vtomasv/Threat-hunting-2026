@@ -580,7 +580,7 @@ def main():
     }
 
     es.indices.delete(index=INDEX, ignore=[404])
-    es.indices.create(index=INDEX, body=mapping)
+    es.indices.create(index=INDEX, mappings=mapping["mappings"])
 
     events = generate_dataset()
     for i, event in enumerate(events):

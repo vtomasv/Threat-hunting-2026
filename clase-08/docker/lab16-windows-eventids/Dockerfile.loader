@@ -1,5 +1,5 @@
 FROM python:3.11-slim
-RUN pip install --no-cache-dir elasticsearch requests
+RUN pip install --no-cache-dir "elasticsearch>=8.0,<9.0" requests
 COPY scripts/ /app/
 WORKDIR /app
 CMD ["sh", "-c", "python3 load_winevt_data.py && python3 setup_kibana_lab16.py"]

@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-RUN pip install --no-cache-dir elasticsearch requests && \
+RUN pip install --no-cache-dir "elasticsearch>=8.0,<9.0" requests && \
     apt-get update && apt-get install -y --no-install-recommends \
     curl jq bash-completion && \
     rm -rf /var/lib/apt/lists/*
