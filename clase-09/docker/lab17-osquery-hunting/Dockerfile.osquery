@@ -10,8 +10,12 @@ WORKDIR /app
 # Generate the simulated Osquery database
 RUN python3 generate_osquery_db.py
 
-# Create osquery-sim command
+# Create osqueryi command (interactive SQL shell)
 RUN echo '#!/bin/bash\npython3 /app/osquery_sim.py "$@"' > /usr/local/bin/osqueryi && \
     chmod +x /usr/local/bin/osqueryi
+
+# Create simulate command (attack event generator)
+RUN echo '#!/bin/bash\npython3 /app/attack_simulator.py "$@"' > /usr/local/bin/simulate && \
+    chmod +x /usr/local/bin/simulate
 
 CMD ["/bin/bash"]

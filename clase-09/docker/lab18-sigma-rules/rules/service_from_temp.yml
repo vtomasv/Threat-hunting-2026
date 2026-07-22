@@ -1,0 +1,29 @@
+title: Service Installed from Suspicious Directory
+id: e9f04a6b-3c5d-6e7f-0a1b-4d8c6f0e2a3b
+status: stable
+description: Detects Windows service installation where the binary is located in a temporary or user-writable directory
+references:
+    - https://attack.mitre.org/techniques/T1543/003/
+author: MAR404 Course
+date: 2025/07/20
+tags:
+    - attack.persistence
+    - attack.t1543.003
+    - attack.privilege-escalation
+logsource:
+    product: windows
+    service: system
+detection:
+    selection:
+        EventID: 7045
+    selection_path:
+        ImagePath|contains:
+            - '\Temp\'
+            - '\Users\Public\'
+            - '\AppData\'
+            - '\Downloads\'
+            - 'C:\ProgramData\'
+    condition: selection and selection_path
+falsepositives:
+    - Legitimate software installers using temp directories
+level: high

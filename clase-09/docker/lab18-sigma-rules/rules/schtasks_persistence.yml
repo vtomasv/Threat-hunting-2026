@@ -1,0 +1,31 @@
+title: Scheduled Task Created for Persistence
+id: d8e93f5a-2b4c-5d6e-9f0a-3c7b5e9d1f2a
+status: stable
+description: Detects creation of scheduled tasks that execute binaries from suspicious locations
+references:
+    - https://attack.mitre.org/techniques/T1053/005/
+author: MAR404 Course
+date: 2025/07/20
+tags:
+    - attack.persistence
+    - attack.t1053.005
+    - attack.execution
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection_tool:
+        Image|endswith: '\schtasks.exe'
+        CommandLine|contains: '/create'
+    selection_suspicious_path:
+        CommandLine|contains:
+            - '\Temp\'
+            - '\Users\Public\'
+            - '\AppData\'
+            - '%TEMP%'
+            - 'C:\ProgramData\'
+    condition: selection_tool and selection_suspicious_path
+falsepositives:
+    - Software installers creating legitimate scheduled tasks
+    - Windows Update
+level: high

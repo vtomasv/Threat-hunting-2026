@@ -1,5 +1,5 @@
 ###############################################################################
-# LAB 18: Sigma Rules - Escritura y Conversión
+# LAB 18: Sigma Rules - Escritura, Conversión y Detección en Vivo
 # Curso MAR404 - Cacería de Amenazas (Threat Hunter) - Clase 9
 ###############################################################################
 
@@ -15,6 +15,24 @@ services:
       - sigma-data:/data
     networks:
       - hunt-net
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        python3 generate_test_events.py
+        echo ""
+        echo "============================================================"
+        echo "  LAB 18 - SIGMA RULES DETECTION ENGINE"
+        echo "============================================================"
+        echo "  Comandos disponibles:"
+        echo "    trigger list              - Ver escenarios de ataque"
+        echo "    trigger <escenario>       - Ejecutar escenario"
+        echo "    trigger validate          - Validar dataset vs reglas"
+        echo "    trigger validate <rule>   - Validar contra regla específica"
+        echo "    sigma check rules/        - Verificar sintaxis de reglas"
+        echo "    sigma convert -t splunk rules/<rule>.yml"
+        echo "    sigma convert -t elasticsearch rules/<rule>.yml"
+        echo "============================================================"
+        exec /bin/bash
 
 networks:
   hunt-net:

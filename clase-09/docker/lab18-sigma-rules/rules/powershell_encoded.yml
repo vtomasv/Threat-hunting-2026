@@ -1,0 +1,37 @@
+title: Suspicious PowerShell Encoded Command
+id: b4c01e5a-7c2d-4f8e-9a1b-3d5e7f9a2c4d
+status: stable
+description: Detects PowerShell execution with encoded command line arguments commonly used for obfuscation
+references:
+    - https://attack.mitre.org/techniques/T1059/001/
+    - https://attack.mitre.org/techniques/T1027/
+author: MAR404 Course
+date: 2025/07/20
+tags:
+    - attack.execution
+    - attack.t1059.001
+    - attack.defense-evasion
+    - attack.t1027
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection_img:
+        Image|endswith:
+            - '\powershell.exe'
+            - '\pwsh.exe'
+    selection_enc:
+        CommandLine|contains:
+            - '-enc'
+            - '-EncodedCommand'
+            - '-e '
+    selection_hidden:
+        CommandLine|contains:
+            - '-w hidden'
+            - '-WindowStyle Hidden'
+            - '-nop'
+    condition: selection_img and (selection_enc or (selection_hidden and selection_enc))
+falsepositives:
+    - Legitimate administrative scripts using encoding for special characters
+    - SCCM/MECM deployments
+level: high

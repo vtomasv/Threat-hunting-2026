@@ -1,0 +1,33 @@
+title: Windows Defender Disabled via PowerShell or Registry
+id: a7b8c24d-1e3f-4a5b-8c9d-2f6e4b8a0c1d
+status: stable
+description: Detects attempts to disable Windows Defender real-time protection via PowerShell Set-MpPreference or direct registry manipulation
+references:
+    - https://attack.mitre.org/techniques/T1562/001/
+author: MAR404 Course
+date: 2025/07/20
+tags:
+    - attack.defense-evasion
+    - attack.t1562.001
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection_powershell:
+        Image|endswith:
+            - '\powershell.exe'
+            - '\pwsh.exe'
+        CommandLine|contains:
+            - 'Set-MpPreference'
+            - 'DisableRealtimeMonitoring'
+            - 'DisableAntiSpyware'
+    selection_reg:
+        Image|endswith: '\reg.exe'
+        CommandLine|contains|all:
+            - 'Windows Defender'
+            - 'DisableAntiSpyware'
+    condition: selection_powershell or selection_reg
+falsepositives:
+    - Legitimate administrative actions during troubleshooting
+    - Third-party AV installation scripts
+level: high

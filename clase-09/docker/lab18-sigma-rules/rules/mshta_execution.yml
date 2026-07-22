@@ -1,0 +1,29 @@
+title: MSHTA Executing Remote or Suspicious Content
+id: a1b26c8d-5e7f-8a9b-2c3d-6f0e8b2a4c5d
+status: stable
+description: Detects mshta.exe executing remote HTA files or inline VBScript/JavaScript - commonly abused for initial access and defense evasion
+references:
+    - https://attack.mitre.org/techniques/T1218/005/
+    - https://lolbas-project.github.io/#/execute
+author: MAR404 Course
+date: 2025/07/20
+tags:
+    - attack.defense-evasion
+    - attack.t1218.005
+    - attack.execution
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection:
+        Image|endswith: '\mshta.exe'
+    selection_remote:
+        CommandLine|contains:
+            - 'http://'
+            - 'https://'
+            - 'javascript:'
+            - 'vbscript:'
+    condition: selection and selection_remote
+falsepositives:
+    - Legitimate HTA applications (rare in modern environments)
+level: high

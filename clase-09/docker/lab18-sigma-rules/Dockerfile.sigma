@@ -1,17 +1,36 @@
 FROM python:3.11-slim
 
+LABEL maintainer="MAR404 Course"
+LABEL description="Lab 18 - Sigma Rules Detection Engine"
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    jq vim nano && \
+    jq vim nano less && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir pySigma sigma-cli pySigma-backend-elasticsearch pySigma-backend-splunk pySigma-pipeline-sysmon pySigma-pipeline-windows
+RUN pip install --no-cache-dir \
+    pySigma \
+    sigma-cli \
+    pySigma-backend-elasticsearch \
+    pySigma-backend-splunk \
+    pySigma-pipeline-sysmon \
+    pySigma-pipeline-windows \
+    PyYAML
 
+# Crear directorios
+RUN mkdir -p /data
+
+# Copiar scripts, reglas y ejercicios
 COPY scripts/ /app/
 COPY rules/ /app/rules/
 COPY exercises/ /app/exercises/
+
 WORKDIR /app
 
-# Generate test events
-RUN python3 generate_test_events.py
+# Crear alias 'trigger' para ejecutar escenarios
+RUN printf '#!/bin/bash\ncd /app && python3 trigger_events.py "$@"\n' > /usr/local/bin/trigger && \
+    chmod +x /usr/local/bin/trigger
+
+# Generar dataset inicial
+RUN python3 generate_test_events.py || true
 
 CMD ["/bin/bash"]
