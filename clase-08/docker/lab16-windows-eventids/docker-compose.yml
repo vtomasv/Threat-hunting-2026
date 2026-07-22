@@ -1,6 +1,16 @@
 ###############################################################################
-# LAB 16: Correlación de Windows Event IDs
+# LAB 16: Correlación Avanzada de Windows Event IDs
 # Curso MAR404 - Cacería de Amenazas (Threat Hunter) - Clase 8
+#
+# Uso:
+#   docker compose up -d
+#   docker exec -it winevt-simulator bash
+#
+# Servicios:
+#   - Elasticsearch (puerto 9200)
+#   - Kibana (puerto 5601)
+#   - Loader (carga dataset inicial + configura Kibana)
+#   - Simulator (contenedor interactivo con simulador de ataques en vivo)
 ###############################################################################
 
 services:
@@ -44,6 +54,19 @@ services:
         condition: service_healthy
     networks:
       - elk-net
+
+  simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile.simulator
+    container_name: winevt-simulator
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - elk-net
+    stdin_open: true
+    tty: true
 
 networks:
   elk-net:

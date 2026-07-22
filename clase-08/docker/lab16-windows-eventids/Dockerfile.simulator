@@ -1,0 +1,32 @@
+FROM python:3.11-slim
+
+RUN pip install --no-cache-dir elasticsearch requests && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    curl jq bash-completion && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY scripts/ /app/
+WORKDIR /app
+
+# Crear alias para el simulador
+RUN echo 'alias simulate="python3 /app/attack_simulator_winevt.py"' >> /root/.bashrc && \
+    echo 'alias hunt="python3 /app/hunt_queries.py"' >> /root/.bashrc && \
+    echo '' >> /root/.bashrc && \
+    echo 'echo ""' >> /root/.bashrc && \
+    echo 'echo "╔══════════════════════════════════════════════════════════════╗"' >> /root/.bashrc && \
+    echo 'echo "║  LAB 16: Correlación Avanzada de Windows Event IDs          ║"' >> /root/.bashrc && \
+    echo 'echo "║  Curso MAR404 - Cacería de Amenazas                         ║"' >> /root/.bashrc && \
+    echo 'echo "╠══════════════════════════════════════════════════════════════╣"' >> /root/.bashrc && \
+    echo 'echo "║  Comandos disponibles:                                      ║"' >> /root/.bashrc && \
+    echo 'echo "║    simulate list    → Ver escenarios de ataque              ║"' >> /root/.bashrc && \
+    echo 'echo "║    simulate <name>  → Ejecutar escenario                    ║"' >> /root/.bashrc && \
+    echo 'echo "║    simulate all     → Ejecutar todos                        ║"' >> /root/.bashrc && \
+    echo 'echo "║    simulate reset   → Limpiar eventos simulados             ║"' >> /root/.bashrc && \
+    echo 'echo "║    hunt list        → Ver queries de hunting disponibles    ║"' >> /root/.bashrc && \
+    echo 'echo "║    hunt <name>      → Ejecutar query de hunting             ║"' >> /root/.bashrc && \
+    echo 'echo "║                                                              ║"' >> /root/.bashrc && \
+    echo 'echo "║  Kibana: http://localhost:5601                               ║"' >> /root/.bashrc && \
+    echo 'echo "╚══════════════════════════════════════════════════════════════╝"' >> /root/.bashrc && \
+    echo 'echo ""' >> /root/.bashrc
+
+CMD ["bash"]

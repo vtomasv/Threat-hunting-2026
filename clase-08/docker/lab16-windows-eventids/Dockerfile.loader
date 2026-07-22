@@ -2,4 +2,4 @@ FROM python:3.11-slim
 RUN pip install --no-cache-dir elasticsearch requests
 COPY scripts/ /app/
 WORKDIR /app
-CMD ["python3", "load_winevt_data.py"]
+CMD ["sh", "-c", "python3 load_winevt_data.py && python3 setup_kibana_lab16.py"]

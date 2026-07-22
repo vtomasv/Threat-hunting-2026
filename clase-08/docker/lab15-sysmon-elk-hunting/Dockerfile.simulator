@@ -1,0 +1,32 @@
+FROM python:3.11-slim
+
+RUN pip install --no-cache-dir elasticsearch requests && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    curl jq bash-completion && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY scripts/attack_simulator_sysmon.py /app/attack_simulator_sysmon.py
+
+WORKDIR /app
+
+# Crear alias para facilitar el uso
+RUN echo '#!/bin/bash\npython3 /app/attack_simulator_sysmon.py "$@"' > /usr/local/bin/simulate && \
+    chmod +x /usr/local/bin/simulate && \
+    echo '' >> /root/.bashrc && \
+    echo 'echo ""' >> /root/.bashrc && \
+    echo 'echo "╔══════════════════════════════════════════════════════════════╗"' >> /root/.bashrc && \
+    echo 'echo "║  LAB 15: Hunting con Sysmon + ELK Stack                     ║"' >> /root/.bashrc && \
+    echo 'echo "║  Curso MAR404 - Cacería de Amenazas                         ║"' >> /root/.bashrc && \
+    echo 'echo "╠══════════════════════════════════════════════════════════════╣"' >> /root/.bashrc && \
+    echo 'echo "║  Comandos disponibles:                                      ║"' >> /root/.bashrc && \
+    echo 'echo "║    simulate list    → Ver escenarios de ataque              ║"' >> /root/.bashrc && \
+    echo 'echo "║    simulate <name>  → Ejecutar escenario                    ║"' >> /root/.bashrc && \
+    echo 'echo "║    simulate all     → Ejecutar todos                        ║"' >> /root/.bashrc && \
+    echo 'echo "║    simulate reset   → Limpiar eventos simulados             ║"' >> /root/.bashrc && \
+    echo 'echo "║                                                              ║"' >> /root/.bashrc && \
+    echo 'echo "║  Kibana: http://localhost:5601                               ║"' >> /root/.bashrc && \
+    echo 'echo "║  Elasticsearch: http://localhost:9200                        ║"' >> /root/.bashrc && \
+    echo 'echo "╚══════════════════════════════════════════════════════════════╝"' >> /root/.bashrc && \
+    echo 'echo ""' >> /root/.bashrc
+
+CMD ["bash"]
