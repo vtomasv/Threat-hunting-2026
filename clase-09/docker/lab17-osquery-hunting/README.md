@@ -7,11 +7,14 @@
 ## Descripción del Escenario
 El equipo del Centro de Operaciones de Seguridad (SOC) ha recibido una alerta de comportamiento anómalo proveniente de un endpoint crítico de la organización. Se sospecha que un actor de amenazas ha logrado comprometer el sistema, estableciendo persistencia y abriendo canales de comunicación hacia el exterior. Como Threat Hunter, tu misión es utilizar Osquery para interrogar el sistema operativo, identificar los procesos maliciosos, descubrir las tareas programadas ocultas y rastrear las conexiones de red sospechosas para reconstruir la cadena de ataque.
 
+El laboratorio incluye un **simulador de ataques en vivo** que permite inyectar nuevos indicadores de compromiso en tiempo real para practicar la detección.
+
 ## Objetivos de Aprendizaje
 * Comprender el uso de Osquery como herramienta de interrogación de endpoints mediante sintaxis SQL.
 * Identificar técnicas de persistencia comunes, como tareas programadas ocultas y elementos de inicio maliciosos.
 * Detectar procesos ejecutándose desde rutas inusuales y conexiones de red anómalas.
 * Mapear los hallazgos técnicos con las tácticas y técnicas del framework MITRE ATT&CK.
+* Practicar la detección de ataques simulados en vivo (DLL injection, ransomware, credential dump, etc.).
 
 ## Requisitos Previos
 * **Docker y Docker Compose:** Instalados y configurados en el sistema host.
@@ -21,27 +24,22 @@ El equipo del Centro de Operaciones de Seguridad (SOC) ha recibido una alerta de
 ## Despliegue Paso a Paso
 
 1. **Clonar o acceder al directorio del laboratorio:**
-   Asegúrate de estar en el directorio correcto donde se encuentra el archivo `docker-compose.yml`.
    ```bash
-   cd /home/ubuntu/MAR404-threat-hunting-2026/clase-09/docker/lab17-osquery-hunting/
+   cd clase-09/docker/lab17-osquery-hunting/
    ```
 
 2. **Levantar el entorno:**
-   Ejecuta el siguiente comando para iniciar el contenedor en segundo plano.
    ```bash
-   docker-compose up -d
+   docker compose up -d
    ```
    *Verificación:* Ejecuta `docker ps` y confirma que el contenedor `osquery-hunter` está en estado "Up".
 
 3. **Acceder al contenedor:**
-   Ingresa a la terminal interactiva del contenedor.
    ```bash
    docker exec -it osquery-hunter bash
    ```
-   *Verificación:* El prompt de tu terminal debería cambiar, indicando que estás dentro del contenedor (ej. `root@osquery-hunter:/#`).
 
 4. **Iniciar Osquery:**
-   Lanza la interfaz interactiva de Osquery.
    ```bash
    osqueryi
    ```
@@ -49,138 +47,348 @@ El equipo del Centro de Operaciones de Seguridad (SOC) ha recibido una alerta de
 
 ---
 
-## Ejercicios Paso a Paso
+## Tablas Disponibles (12)
 
-### Ejercicio 1: Detección de Procesos en Rutas Inusuales
-**Hipótesis de Hunting:** Los atacantes suelen ejecutar malware desde directorios temporales o públicos para evadir restricciones de ejecución. Buscaremos procesos que no se estén ejecutando desde los directorios estándar del sistema.
+| Tabla | Descripción | Campos Clave |
+|-------|-------------|--------------|
+| `processes` | Procesos activos | pid, name, path, cmdline, parent, is_elevated |
+| `process_open_sockets` | Conexiones de red | pid, remote_address, remote_port, state |
+| `scheduled_tasks` | Tareas programadas | name, action, hidden, username |
+| `startup_items` | Items de inicio | name, path, source, status |
+| `listening_ports` | Puertos en escucha | pid, port, address |
+| `hash` | Hashes de archivos | path, md5, sha256, sha1 |
+| `file_events` | Eventos de filesystem | target_path, action, time, size, process_pid |
+| `registry` | Claves de registro | path, name, type, data, mtime |
+| `drivers` | Drivers cargados | name, path, signed, manufacturer |
+| `logged_in_users` | Sesiones activas | type, user, host, time |
+| `process_events` | Log de ejecución | pid, path, cmdline, parent, parent_path, time |
+| `dns_cache` | Cache DNS | name, type, answer, ttl, time_queried |
 
-**Comandos Exactos:**
+**Comandos útiles:**
 ```sql
-SELECT pid, name, path FROM processes WHERE path NOT LIKE 'C:\Windows%' AND path NOT LIKE 'C:\Program Files%' AND path != '';
+.tables              -- Lista todas las tablas
+.schema processes    -- Muestra el schema de una tabla
+.count processes     -- Cuenta registros
+.hunting             -- Muestra 15 queries de hunting sugeridas
+.help                -- Ayuda completa
 ```
-*Explicación:* 
-* `SELECT pid, name, path`: Selecciona el ID del proceso, su nombre y la ruta del ejecutable.
-* `FROM processes`: Consulta la tabla de procesos activos.
-* `WHERE path NOT LIKE ...`: Filtra los resultados excluyendo las rutas legítimas comunes de Windows.
-
-**Qué buscar en la salida:**
-Busca procesos ejecutándose desde rutas como `C:\Users\Public`, `C:\Temp` o directorios de datos de aplicaciones.
-
-**Preguntas de Análisis:**
-1. ¿Qué proceso sospechoso encontraste y desde qué ruta se está ejecutando?
-2. ¿Por qué un atacante elegiría esa ruta específica?
-3. ¿Qué implicaciones tiene que un proceso se ejecute desde un directorio público?
-
-**Respuestas Esperadas:**
-1. Se espera encontrar un proceso malicioso (ej. `svchost.exe` o un nombre aleatorio) ejecutándose desde `C:\Users\Public`.
-2. Los directorios públicos suelen tener permisos de escritura para cualquier usuario, facilitando la descarga y ejecución de payloads sin privilegios de administrador.
-3. Indica una posible evasión de controles de seguridad básicos y un compromiso inicial del sistema.
 
 ---
 
-### Ejercicio 2: Identificación de Conexiones de Red Sospechosas
-**Hipótesis de Hunting:** El malware instalado probablemente esté comunicándose con un servidor de Comando y Control (C2). Buscaremos conexiones de red establecidas hacia direcciones IP externas.
+## Ejercicios de Hunting Paso a Paso
 
-**Comandos Exactos:**
+### Ejercicio 1: Detección de Procesos en Rutas Inusuales (Masquerading)
+**Hipótesis:** Los atacantes ejecutan binarios con nombres legítimos (svchost.exe, lsass.exe) desde rutas no estándar para evadir detección.
+
+**Query:**
 ```sql
-SELECT p.pid, p.name, s.remote_address, s.remote_port FROM processes p JOIN process_open_sockets s ON p.pid = s.pid WHERE s.remote_address NOT LIKE '10.%' AND s.remote_address != '127.0.0.1' AND s.remote_address != '0.0.0.0' AND s.remote_address != '::';
+SELECT pid, name, path, parent FROM processes 
+WHERE path NOT LIKE 'C:\Windows\System32%' 
+  AND path NOT LIKE 'C:\Windows\SysWOW64%'
+  AND path NOT LIKE 'C:\Program Files%' 
+  AND path NOT LIKE 'C:\Windows\explorer.exe'
+  AND path != '' AND name IN ('svchost.exe','lsass.exe','csrss.exe','services.exe');
 ```
-*Explicación:*
-* `JOIN process_open_sockets`: Une la tabla de procesos con la de sockets abiertos usando el PID.
-* `WHERE s.remote_address NOT LIKE '10.%' ...`: Filtra las conexiones locales o internas para centrarse en IPs externas.
 
-**Qué buscar en la salida:**
-Identifica procesos que tengan conexiones activas hacia IPs públicas, especialmente en puertos no estándar o puertos comunes usados para C2 (ej. 4444, 8080).
+**Qué buscar:** Procesos como `svchost.exe` ejecutándose desde `C:\Users\Public\` o `C:\Windows\Temp\`.
 
 **Preguntas de Análisis:**
-1. ¿Qué proceso está realizando la conexión externa?
-2. ¿A qué dirección IP y puerto se está conectando?
-3. ¿El proceso identificado en este ejercicio coincide con el encontrado en el Ejercicio 1?
+1. ¿Qué proceso sospechoso encontraste y desde qué ruta se ejecuta?
+2. ¿Por qué un atacante elegiría usar el nombre `svchost.exe`?
+3. ¿Cuál es el PID padre de este proceso? ¿Es coherente con un svchost legítimo?
 
 **Respuestas Esperadas:**
-1. El proceso malicioso identificado anteriormente (ej. el que corre desde `C:\Users\Public`).
-2. Una IP externa sospechosa y un puerto inusual, como el 4444.
-3. Sí, esto confirma que el proceso anómalo es el responsable de la comunicación C2.
+1. `svchost.exe` (PID 7788) ejecutándose desde `C:\Users\Public\svchost.exe` — un svchost legítimo SIEMPRE está en `C:\Windows\System32\`.
+2. Porque `svchost.exe` es uno de los procesos más comunes en Windows y los analistas podrían ignorarlo. Técnica MITRE T1036.005 (Masquerading).
+3. Su padre es PID 2400 (`explorer.exe`), lo cual es anómalo — un svchost legítimo siempre es hijo de `services.exe` (PID 800).
 
 ---
 
-### Ejercicio 3: Descubrimiento de Persistencia Oculta
-**Hipótesis de Hunting:** Para mantener el acceso tras un reinicio, el atacante ha creado un mecanismo de persistencia. Buscaremos tareas programadas que hayan sido configuradas para ocultarse del usuario.
+### Ejercicio 2: Anomalías Parent-Child
+**Hipótesis:** Los procesos legítimos de Windows tienen relaciones padre-hijo bien definidas. Una violación indica compromiso.
 
-**Comandos Exactos:**
+**Query:**
 ```sql
-SELECT name, action, path, hidden FROM scheduled_tasks WHERE hidden = 1;
+SELECT p.pid, p.name, p.path, p.parent, pp.name as parent_name, pp.path as parent_path
+FROM processes p LEFT JOIN processes pp ON p.parent = pp.pid
+WHERE p.name = 'svchost.exe' AND pp.name != 'services.exe';
 ```
-*Explicación:*
-* `SELECT name, action, path, hidden`: Muestra el nombre de la tarea, la acción que realiza, la ruta del ejecutable y su estado de ocultación.
-* `FROM scheduled_tasks`: Consulta la tabla de tareas programadas.
-* `WHERE hidden = 1`: Filtra específicamente aquellas tareas que tienen el flag de oculto activado.
 
-**Qué buscar en la salida:**
-Busca tareas programadas que ejecuten binarios sospechosos o scripts desde rutas no estándar.
+**Qué buscar:** Instancias de `svchost.exe` cuyo padre NO sea `services.exe`.
+
+---
+
+### Ejercicio 3: Conexiones C2 (Command & Control)
+**Hipótesis:** El malware establece conexiones salientes hacia IPs externas para recibir comandos.
+
+**Query:**
+```sql
+SELECT p.pid, p.name, p.path, s.remote_address, s.remote_port 
+FROM processes p JOIN process_open_sockets s ON p.pid = s.pid 
+WHERE s.remote_address NOT LIKE '10.%' 
+  AND s.remote_address NOT LIKE '192.168.%'
+  AND s.remote_address NOT LIKE '172.16.%'
+  AND s.remote_address != '127.0.0.1';
+```
+
+**Qué buscar:** Procesos sospechosos (svchost falso, rundll32, notepad) con conexiones a IPs como `198.51.100.10` o `203.0.113.50` en puertos como 443, 4444, 8443.
 
 **Preguntas de Análisis:**
-1. ¿Cuál es el nombre de la tarea programada oculta?
-2. ¿Qué acción o ejecutable está configurada para lanzar?
-3. ¿Cómo se relaciona esta tarea con los hallazgos de los ejercicios anteriores?
+1. ¿Cuántas IPs externas sospechosas identificas?
+2. ¿Por qué `notepad.exe` (PID 9800) tiene una conexión de red? ¿Qué técnica indica esto?
+3. ¿Qué proceso tiene conexión al puerto 4444?
 
 **Respuestas Esperadas:**
-1. Un nombre engañoso diseñado para parecer legítimo (ej. `WindowsUpdateSync`).
-2. El ejecutable malicioso encontrado en `C:\Users\Public`.
-3. Esta tarea garantiza que el proceso malicioso (que realiza la conexión C2) se vuelva a ejecutar automáticamente si el sistema se reinicia.
+1. Tres IPs C2: `198.51.100.10`, `203.0.113.50`, y `185.220.101.45` (si se ejecutó DLL injection).
+2. Notepad.exe con conexión de red indica **Process Hollowing** (T1055.012) — el proceso fue vaciado y reemplazado con código malicioso.
+3. `rundll32.exe` (PID 8500) conectado a `203.0.113.50:4444` — típico de Meterpreter reverse shell.
+
+---
+
+### Ejercicio 4: Persistencia — Tareas Programadas Ocultas
+**Hipótesis:** Los atacantes crean tareas programadas ocultas para mantener acceso tras reinicio.
+
+**Query:**
+```sql
+SELECT name, action, hidden, username FROM scheduled_tasks 
+WHERE hidden = 1 OR action LIKE '%Users%' OR action LIKE '%Temp%';
+```
+
+**Qué buscar:** Tareas con `hidden = 1` o que ejecutan binarios desde rutas sospechosas.
+
+---
+
+### Ejercicio 5: Persistencia — Registry Run Keys
+**Hipótesis:** Las claves de registro Run se usan para ejecutar malware al inicio de sesión.
+
+**Query:**
+```sql
+SELECT path, name, data, mtime FROM registry 
+WHERE path LIKE '%CurrentVersion\Run%' 
+  AND data LIKE '%Users%';
+```
+
+**Qué buscar:** Entradas que apunten a `C:\Users\Public\svchost.exe` o `rundll32.exe` con DLLs en Temp.
+
+---
+
+### Ejercicio 6: Drivers Sin Firma (Rootkit Detection)
+**Hipótesis:** Los rootkits cargan drivers sin firma digital para operar a nivel kernel.
+
+**Query:**
+```sql
+SELECT name, path, manufacturer FROM drivers WHERE signed = 0;
+```
+
+**Qué buscar:** Drivers sin firma con nombres similares a legítimos (`WdFilter2`, `tcplp`).
+
+---
+
+### Ejercicio 7: LOLBins en Uso
+**Hipótesis:** Los atacantes abusan de binarios legítimos de Windows (Living-off-the-Land) para evadir detección.
+
+**Query:**
+```sql
+SELECT pid, name, cmdline, parent, start_time FROM processes 
+WHERE name IN ('certutil.exe','mshta.exe','WMIC.exe','bitsadmin.exe','rundll32.exe','regsvr32.exe');
+```
+
+**Qué buscar:**
+- `certutil.exe` con `-urlcache` (descarga de payloads)
+- `mshta.exe` con URLs (ejecución de HTA malicioso)
+- `WMIC.exe` con `/node:` (ejecución remota)
+- `bitsadmin.exe` con `/transfer` (descarga persistente)
+
+---
+
+### Ejercicio 8: PowerShell Sospechoso
+**Hipótesis:** PowerShell con flags como `-enc`, `-w hidden`, `IEX`, o `DownloadString` indica ejecución maliciosa.
+
+**Query:**
+```sql
+SELECT pid, cmdline, parent, start_time FROM processes 
+WHERE name = 'powershell.exe' 
+  AND (cmdline LIKE '%-enc%' OR cmdline LIKE '%-w hidden%' OR cmdline LIKE '%DownloadString%' OR cmdline LIKE '%IEX%');
+```
+
+---
+
+### Ejercicio 9: Cadena de Ejecución Completa (Process Tree)
+**Hipótesis:** Reconstruir la cadena de ejecución revela la secuencia completa del ataque.
+
+**Query:**
+```sql
+SELECT pe.eid, pe.pid, pe.path, pe.cmdline, pe.parent, pe.parent_path, pe.time
+FROM process_events pe ORDER BY pe.time;
+```
+
+**Qué buscar:** La secuencia temporal: `explorer.exe` → `svchost.exe` (falso) → `powershell.exe` → `rundll32.exe` / `cmd.exe` / `certutil.exe` / etc.
+
+---
+
+### Ejercicio 10: DNS Sospechoso (DGA Detection)
+**Hipótesis:** Los dominios generados algorítmicamente (DGA) tienen alta entropía y TLDs inusuales.
+
+**Query:**
+```sql
+SELECT name, answer, time_queried FROM dns_cache 
+WHERE length(name) > 20 OR name LIKE '%.xyz' OR name LIKE '%.top'
+ORDER BY time_queried DESC;
+```
+
+**Qué buscar:** Dominios como `xkjh7f2m9p.com`, `m3kf9x2lp7.net` que resuelven a la misma IP C2.
+
+---
+
+### Ejercicio 11: Credential Access
+**Hipótesis:** Herramientas como Mimikatz acceden a lsass.exe o extraen SAM.
+
+**Query:**
+```sql
+SELECT pid, name, path, cmdline FROM processes 
+WHERE cmdline LIKE '%lsass%' OR cmdline LIKE '%SAM%' OR cmdline LIKE '%sekurlsa%'
+  OR name = 'procdump.exe' OR (name = 'lsass.exe' AND path NOT LIKE '%System32%');
+```
+
+**Qué buscar:** Un segundo `lsass.exe` ejecutándose desde `C:\Windows\Temp\` (PID 9200).
+
+---
+
+### Ejercicio 12: Windows Defender Deshabilitado
+**Hipótesis:** Los atacantes deshabilitan el antivirus antes de ejecutar payloads.
+
+**Query:**
+```sql
+SELECT path, name, data, mtime FROM registry 
+WHERE (name LIKE '%Disable%' AND data = '1') 
+  AND path LIKE '%Defender%';
+```
+
+**Qué buscar:** `DisableAntiSpyware = 1` y `DisableRealtimeMonitoring = 1`.
+
+---
+
+## Simulador de Ataques en Vivo
+
+El lab incluye un simulador que inyecta nuevos indicadores de compromiso en la base de datos para practicar detección en tiempo real.
+
+### Comandos del Simulador
+```bash
+simulate list                  # Ver todos los escenarios disponibles
+simulate <escenario>           # Ejecutar un escenario específico
+simulate all                   # Ejecutar TODOS los escenarios
+simulate reset                 # Reiniciar la BD al estado original
+```
+
+### Escenarios Disponibles (15)
+
+| Escenario | Técnica MITRE | Descripción |
+|-----------|---------------|-------------|
+| `dll_injection` | T1055.001 | Inyección de DLL maliciosa en explorer.exe |
+| `ransomware` | T1486 | Cifrado masivo + borrado de shadow copies |
+| `credential_dump` | T1003.001 | Mimikatz renombrado accediendo a LSASS |
+| `reverse_shell` | T1059.004 | PowerShell reverse shell hacia C2 |
+| `lateral_movement` | T1021.002 | PsExec hacia otro host de la red |
+| `persistence_registry` | T1547.001 | Persistencia via Registry Run Key |
+| `persistence_schtask` | T1053.005 | Tarea programada para persistencia |
+| `lolbin_certutil` | T1105 | certutil.exe descargando payload |
+| `lolbin_mshta` | T1218.005 | mshta.exe ejecutando HTA malicioso |
+| `lolbin_wmic` | T1047 | WMIC ejecución remota |
+| `data_exfiltration` | T1048.002 | Exfiltración de datos via HTTPS |
+| `fileless_powershell` | T1059.001 | Payload en memoria sin tocar disco |
+| `defender_disable` | T1562.001 | Deshabilitación de Windows Defender |
+| `process_hollowing` | T1055.012 | Process hollowing en svchost.exe |
+| `dga_communication` | T1568.002 | Comunicación con dominios DGA |
+
+### Ejemplo de Uso del Simulador
+
+```bash
+# 1. Simular un ataque de DLL Injection
+simulate dll_injection
+
+# 2. Abrir osqueryi para detectarlo
+osqueryi
+
+# 3. Buscar el indicador
+SELECT pid, name, path FROM processes WHERE path LIKE '%AppData%Roaming%';
+SELECT target_path, action FROM file_events WHERE category = 'suspicious' AND target_path LIKE '%.dll';
+SELECT p.pid, p.name, s.remote_address FROM processes p JOIN process_open_sockets s ON p.pid = s.pid WHERE p.pid = 2400;
+```
+
+### Flujo de Trabajo Recomendado
+
+1. **Ejecutar un escenario:** `simulate ransomware`
+2. **Leer las pistas** que el simulador imprime en pantalla
+3. **Abrir osqueryi** y escribir queries para detectar los indicadores
+4. **Documentar hallazgos** con técnica MITRE correspondiente
+5. **Repetir** con otro escenario o ejecutar `simulate all` para un desafío completo
 
 ---
 
 ## Mapeo MITRE ATT&CK
 
-| ID Técnica | Nombre de la Técnica | Evidencia en el Laboratorio |
-| :--- | :--- | :--- |
-| T1036.005 | Masquerading: Match Legitimate Name or Location | Proceso malicioso usando un nombre legítimo o ejecutándose desde `C:\Users\Public`. |
-| T1071.001 | Application Layer Protocol: Web Protocols | Conexión de red hacia una IP externa en un puerto sospechoso (ej. 4444). |
-| T1053.005 | Scheduled Task/Job: Scheduled Task | Creación de una tarea programada oculta (`hidden = 1`) para persistencia. |
-| T1547.001 | Boot or Logon Autostart Execution: Registry Run Keys / Startup Folder | Posibles elementos de inicio maliciosos adicionales (startup items). |
+| ID Técnica | Nombre | Evidencia en el Laboratorio |
+|:---|:---|:---|
+| T1036.005 | Masquerading: Match Legitimate Name | `svchost.exe` desde `C:\Users\Public\` |
+| T1055.001 | Process Injection: DLL Injection | `injector.exe` inyectando DLL en explorer.exe |
+| T1055.012 | Process Hollowing | `notepad.exe` con conexión de red (hollowed) |
+| T1071.001 | Application Layer Protocol: Web | Conexiones C2 en puerto 443 |
+| T1053.005 | Scheduled Task | Tarea oculta `WindowsDefenderUpdate` |
+| T1547.001 | Registry Run Keys | Persistencia en `HKLM\...\Run` |
+| T1003.001 | LSASS Memory | `lsass.exe` falso desde Temp |
+| T1486 | Data Encrypted for Impact | Archivos `.encrypted` / `.locked` |
+| T1218.005 | Mshta | `mshta.exe` ejecutando HTA remoto |
+| T1105 | Ingress Tool Transfer | `certutil.exe -urlcache` |
+| T1562.001 | Disable or Modify Tools | Defender deshabilitado via registro |
+| T1568.002 | Domain Generation Algorithms | Dominios DGA en dns_cache |
 
 ---
 
-## Cadena de Ataque Completa
+## Cadena de Ataque Completa (Dataset Base)
 
 ```text
-[Compromiso Inicial] ---> [Ejecución] ---> [Persistencia] ---> [Comando y Control]
-         |                     |                 |                     |
-   (Phishing/Exploit)   (Proceso en path)  (Scheduled Task)    (Conexión a IP externa)
-         |                     |                 |                     |
-         v                     v                 v                     v
-    Acceso al host      C:\Users\Public\...   hidden = 1        Puerto 4444 / IP Externa
+[Compromiso Inicial]           [Ejecución]              [Persistencia]
+  Phishing → explorer.exe  →  svchost.exe (falso)  →  Scheduled Task (hidden)
+                                    |                   Registry Run Key
+                                    v
+                              [Post-Explotación]
+                              powershell -enc → rundll32 (DLL) → cmd (recon)
+                                    |              |
+                                    v              v
+                              [Credential Access]  [Lateral Movement]
+                              lsass.exe (falso)    WMIC /node:10.0.1.100
+                                    |
+                                    v
+                              [C2 Communication]
+                              198.51.100.10:443 (principal)
+                              203.0.113.50:4444 (exfiltración)
+                              DGA domains → misma IP C2
 ```
 
 ---
 
 ## Limpieza
 
-Una vez finalizado el laboratorio, es importante limpiar el entorno para liberar recursos.
+```bash
+# Salir de osqueryi
+.quit
 
-1. Salir de la interfaz de Osquery:
-   ```sql
-   .exit
-   ```
-2. Salir del contenedor:
-   ```bash
-   exit
-   ```
-3. Detener y eliminar el contenedor:
-   ```bash
-   docker-compose down
-   ```
+# Salir del contenedor
+exit
+
+# Detener y eliminar
+docker compose down
+```
 
 ---
 
 ## Troubleshooting
 
-* **Problema:** El comando `docker-compose up -d` falla indicando que el puerto ya está en uso.
-  * **Solución:** Aunque este laboratorio no expone puertos, si hay conflictos con otros contenedores, detén los contenedores conflictivos con `docker stop <container_id>`.
-* **Problema:** Al ejecutar `osqueryi`, aparece un error de permisos o comando no encontrado.
-  * **Solución:** Asegúrate de haber ingresado al contenedor correcto (`docker exec -it osquery-hunter bash`) y de tener privilegios suficientes (deberías ser root por defecto).
-* **Problema:** Las consultas SQL no devuelven resultados.
-  * **Solución:** Verifica la sintaxis de la consulta. Osquery requiere que las sentencias SQL terminen con un punto y coma (`;`). Asegúrate de no haber omitido este carácter.
-* **Problema:** No se encuentra el archivo `docker-compose.yml`.
-  * **Solución:** Verifica que estás en el directorio correcto (`/home/ubuntu/MAR404-threat-hunting-2026/clase-09/docker/lab17-osquery-hunting/`) antes de ejecutar los comandos de Docker.
+* **Problema:** `osqueryi` no devuelve resultados.
+  **Solución:** Verifica la sintaxis SQL (terminar con `;`). Usa `.tables` para ver tablas disponibles.
+* **Problema:** `simulate` no se reconoce como comando.
+  **Solución:** Asegúrate de estar dentro del contenedor (`docker exec -it osquery-hunter bash`).
+* **Problema:** Después de `simulate reset`, los escenarios anteriores desaparecen.
+  **Solución:** Esto es intencional — `reset` regenera la BD al estado original. Vuelve a ejecutar los escenarios que necesites.
+* **Problema:** Las queries no encuentran los eventos simulados.
+  **Solución:** Sal de `osqueryi` (`.quit`) y vuelve a entrar para que la BD se recargue con los nuevos datos.

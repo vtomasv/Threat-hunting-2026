@@ -2,6 +2,7 @@
 """
 setup_kibana_lab16.py - Configura visualizaciones y dashboard en Kibana para Lab 16
 Crea Data View, Saved Searches, Visualizaciones y Dashboard.
+Curso MAR404 - Clase 8 - Lab 16
 """
 import time, json, requests
 
