@@ -7,7 +7,7 @@ references:
 author: MAR404 Course
 date: 2025/07/20
 tags:
-    - attack.credential_access
+    - attack.credential-access
     - attack.t1003.001
 logsource:
     category: process_access
