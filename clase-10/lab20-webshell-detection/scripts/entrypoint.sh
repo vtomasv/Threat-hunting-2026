@@ -101,15 +101,32 @@ EOF
 
 chown -R analyst:analyst /home/analyst /investigation /evidence
 
-# ─── Iniciar VNC Server ───
+# ─── Iniciar VNC Server usando Xtigervnc directamente (método Docker) ───
 echo "[*] Iniciando servidor VNC..."
-# tigervnc en Ubuntu 22.04 usa 'tigervncserver' (no 'vncserver')
-su - analyst -c "tigervncserver :1 -geometry 1280x800 -depth 24 -localhost no" 2>/dev/null || \
-    su - analyst -c "tigervncserver :1 -geometry 1280x800 -depth 24" 2>/dev/null || \
-    su - analyst -c "vncserver :1 -geometry 1280x800 -depth 24" 2>/dev/null || true
 
-# Esperar a que VNC inicie
-sleep 2
+# Usar Xtigervnc directamente - el wrapper tigervncserver no funciona en Docker
+# Xtigervnc provee X11 + VNC en un solo proceso
+Xtigervnc :1 -geometry 1280x800 -depth 24 -rfbport 5901 \
+    -SecurityTypes VncAuth -PasswordFile /home/analyst/.vnc/passwd \
+    -AlwaysShared -AcceptKeyEvents -AcceptPointerEvents \
+    -desktop "Lab20-WebShells" &
+
+# Esperar a que el servidor X esté listo
+for i in $(seq 1 10); do
+    if [ -e /tmp/.X11-unix/X1 ]; then
+        echo "[+] X server listo"
+        break
+    fi
+    sleep 1
+done
+
+# Iniciar XFCE4 como escritorio
+export DISPLAY=:1
+su - analyst -c "export DISPLAY=:1 && dbus-launch --exit-with-session startxfce4" &
+
+# Esperar a que el escritorio inicie
+sleep 3
+echo "[+] VNC Server iniciado en puerto 5901"
 
 # ─── Iniciar noVNC ───
 echo "[*] Iniciando noVNC en puerto 6080..."
