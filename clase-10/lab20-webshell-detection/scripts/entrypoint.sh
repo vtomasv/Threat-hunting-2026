@@ -54,6 +54,9 @@ echo "[+] Apache configurado en puerto 8080"
 
 # ─── Copiar herramientas de análisis ───
 echo "[*] Preparando herramientas de detección..."
+mkdir -p /investigation/{logs,findings,yara-rules,reports,tools}
+mkdir -p /evidence/server-image
+mkdir -p /home/analyst/Desktop/Lab20-WebShells
 cp /opt/lab20/scripts/webshell_hunter.py /investigation/tools/
 cp /opt/lab20/scripts/log_analyzer.py /investigation/tools/
 cp /opt/lab20/scripts/entropy_scanner.py /investigation/tools/

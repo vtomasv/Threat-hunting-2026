@@ -31,9 +31,6 @@ services:
       - VNC_PASSWORD=hunter2026
       - CASE_ID=IR-2026-0712-002
       - TARGET_SERVER=webserver.corpfinance.local
-    volumes:
-      - webshell-evidence:/evidence
-      - webshell-investigation:/investigation
     mem_limit: 4g
     cpus: 2.0
     security_opt:
@@ -45,12 +42,6 @@ services:
       - "com.mar404.lab=20"
       - "com.mar404.course=threat-hunting"
       - "com.mar404.description=Web Shell Detection Workstation"
-
-volumes:
-  webshell-evidence:
-    name: lab20-evidence
-  webshell-investigation:
-    name: lab20-investigation
 
 networks:
   webshell-net:

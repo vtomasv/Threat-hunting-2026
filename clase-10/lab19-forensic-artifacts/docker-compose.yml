@@ -29,10 +29,6 @@ services:
       - VNC_PASSWORD=hunter2026
       - CASE_ID=IR-2026-0715-001
       - TARGET_HOST=SRV-FIN-01
-    volumes:
-      - forensic-evidence:/cases
-      - forensic-tools:/tools
-      - forensic-reports:/home/analyst/Documents/reports
     mem_limit: 4g
     cpus: 2.0
     security_opt:
@@ -44,14 +40,6 @@ services:
       - "com.mar404.lab=19"
       - "com.mar404.course=threat-hunting"
       - "com.mar404.description=Forensic Artifacts Analysis Workstation"
-
-volumes:
-  forensic-evidence:
-    name: lab19-evidence
-  forensic-tools:
-    name: lab19-tools
-  forensic-reports:
-    name: lab19-reports
 
 networks:
   forensic-net:

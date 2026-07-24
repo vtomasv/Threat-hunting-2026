@@ -31,6 +31,9 @@ echo ""
 
 # ─── Copiar herramientas de análisis al escritorio ───
 echo "[*] Preparando herramientas de análisis..."
+mkdir -p /tools/{parsers,yara-rules,scripts}
+mkdir -p /cases/SRV-FIN-01/{prefetch,amcache,userassist,mft,timeline,reports}
+mkdir -p /home/analyst/Desktop/Lab19-ForensicArtifacts
 cp /opt/lab19/scripts/artifact_analyzer.py /tools/parsers/
 cp /opt/lab19/scripts/prefetch_parser.py /tools/parsers/
 cp /opt/lab19/scripts/amcache_parser.py /tools/parsers/
