@@ -10,7 +10,6 @@
 | Campo | Detalle |
 |-------|---------|
 | **Clase** | 10 de 11 |
-| **Horario** | 08:00 — 13:30 (5.5 horas) |
 | **Unidad** | Unidad 4: Análisis de Endpoints y Caza Avanzada |
 | **Modalidad** | 100% Presencial — Laboratorios hands-on con noVNC |
 | **Evaluación** | Caso práctico integrador (entrega al final de la clase) |
@@ -19,21 +18,21 @@
 
 ## Agenda de la Clase
 
-| Bloque | Horario | Actividad | Duración |
-|--------|---------|-----------|----------|
-| **Apertura** | 08:00 — 08:15 | Briefing del día, objetivos y contexto | 15 min |
-| **Teoría** | 08:15 — 09:00 | Artefactos forenses de Windows: Prefetch, Amcache, UserAssist, MFT | 45 min |
-| **Lab 19** | 09:00 — 11:00 | Laboratorio: Análisis Forense de Artefactos + Timestomping | 2 horas |
-| **Break** | 11:00 — 11:15 | Pausa | 15 min |
-| **Teoría** | 11:15 — 11:45 | Web Shells: tipos, técnicas de evasión, detección con YARA | 30 min |
-| **Lab 20** | 11:45 — 13:15 | Laboratorio: Detección de Web Shells en Servidor Comprometido | 1.5 horas |
-| **Cierre** | 13:15 — 13:30 | Debriefing, discusión de hallazgos, asignación de tarea | 15 min |
+| Bloque | Actividad |
+|--------|----------|
+| **Apertura** | Briefing del día, objetivos y contexto |
+| **Teoría** | Artefactos forenses de Windows: Prefetch, Amcache, UserAssist, MFT |
+| **Lab 19** | Laboratorio: Análisis Forense de Artefactos + Timestomping |
+| **Break** | Pausa |
+| **Teoría** | Web Shells: tipos, técnicas de evasión, detección con YARA |
+| **Lab 20** | Laboratorio: Detección de Web Shells en Servidor Comprometido |
+| **Cierre** | Debriefing, discusión de hallazgos, asignación de tarea |
 
 ---
 
 ## Contenidos Teóricos
 
-### Bloque 1: Artefactos Forenses de Windows (45 min)
+### Bloque 1: Artefactos Forenses de Windows
 
 1. **Prefetch** — Registro de ejecución de programas en Windows
    - Estructura del archivo `.pf` (formato MAM, versión 30)
@@ -58,7 +57,7 @@
    - Métodos de detección: comparación SI vs FN
    - Herramientas: MFTECmd, analyzeMFT, python-mft
 
-### Bloque 2: Web Shells y Detección (30 min)
+### Bloque 2: Web Shells y Detección
 
 1. **Tipos de Web Shells**
    - One-liners (China Chopper, WSO)
@@ -88,7 +87,6 @@
 | **Técnicas** | Masquerading, LOLBins, Timestomping, Credential Dumping |
 | **Herramientas** | Python parsers, jq, timeline builder |
 | **Acceso** | `http://localhost:6080/vnc.html` |
-| **Duración** | 2 horas |
 
 ### Lab 20: Detección de Web Shells
 
@@ -99,7 +97,6 @@
 | **Técnicas** | Ofuscación, doble extensión, .htaccess override, AES |
 | **Herramientas** | grep, YARA, Python scanners, log analysis |
 | **Acceso** | `http://localhost:6081/vnc.html` |
-| **Duración** | 1.5 horas |
 
 ---
 

@@ -10,7 +10,6 @@
 | Campo | Detalle |
 |-------|---------|
 | **Código** | LAB-19 |
-| **Duración estimada** | 2.5 — 3 horas |
 | **Nivel** | Avanzado |
 | **Prerequisitos** | Clases 1-9 completadas, conocimientos de Windows Internals |
 | **Plataforma** | Docker + noVNC (ARM64 / AMD64) |
@@ -67,7 +66,7 @@ cd clase-10-labs/lab19-forensic-artifacts/
 docker-compose up -d --build
 ```
 
-Este comando construirá la imagen Docker con todas las herramientas forenses y generará automáticamente la evidencia del caso. El proceso toma aproximadamente 2-3 minutos la primera vez.
+Este comando construirá la imagen Docker con todas las herramientas forenses y generará automáticamente la evidencia del caso. 
 
 ### Paso 3: Verificar que el contenedor está corriendo
 
@@ -101,7 +100,7 @@ Esto mostrará el estado de toda la evidencia disponible.
 
 ---
 
-## Ejercicio 1: Reconocimiento del Caso y Evidencia Disponible (20 minutos)
+## Ejercicio 1: Reconocimiento del Caso y Evidencia Disponible
 
 ### Objetivo
 Familiarizarse con el caso, la estructura de evidencia y las herramientas disponibles.
@@ -145,7 +144,7 @@ bash /tools/scripts/hunt_helper.sh quick-wins
 
 ---
 
-## Ejercicio 2: Análisis de Prefetch — Reconstrucción de Ejecuciones (40 minutos)
+## Ejercicio 2: Análisis de Prefetch — Reconstrucción de Ejecuciones
 
 ### Contexto Teórico
 
@@ -220,7 +219,7 @@ python3 /tools/parsers/prefetch_parser.py --file "CERTUTIL"
 
 ---
 
-## Ejercicio 3: Análisis de Amcache — Inventario de Aplicaciones (35 minutos)
+## Ejercicio 3: Análisis de Amcache — Inventario de Aplicaciones
 
 ### Contexto Teórico
 
@@ -291,7 +290,7 @@ cat /cases/SRV-FIN-01/iocs/amcache_hashes_for_vt.txt
 
 ---
 
-## Ejercicio 4: Análisis de UserAssist — Programas Ejecutados via Shell (25 minutos)
+## Ejercicio 4: Análisis de UserAssist — Programas Ejecutados via Shell
 
 ### Contexto Teórico
 
@@ -342,7 +341,7 @@ python3 /tools/parsers/userassist_decoder.py --focus
 
 ---
 
-## Ejercicio 5: Análisis de MFT y Detección de Timestomping (45 minutos)
+## Ejercicio 5: Análisis de MFT y Detección de Timestomping
 
 ### Contexto Teórico
 
@@ -431,7 +430,7 @@ python3 /tools/parsers/timestomp_detector.py --correlate
 
 ---
 
-## Ejercicio 6: Construcción de Timeline Consolidada y Reporte (30 minutos)
+## Ejercicio 6: Construcción de Timeline Consolidada y Reporte
 
 ### Paso 6.1: Generar timeline completa del ataque
 

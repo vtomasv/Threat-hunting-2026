@@ -10,7 +10,6 @@
 | Campo | Detalle |
 |-------|---------|
 | **Código** | LAB-20 |
-| **Duración estimada** | 2.5 — 3 horas |
 | **Nivel** | Avanzado |
 | **Prerequisitos** | Clases 1-9 completadas, conocimientos de PHP y Apache |
 | **Plataforma** | Docker + noVNC (ARM64 / AMD64) |
@@ -94,7 +93,7 @@ cat /investigation/CASO_BRIEFING.txt
 
 ---
 
-## Ejercicio 1: Reconocimiento Inicial del Servidor (20 minutos)
+## Ejercicio 1: Reconocimiento Inicial del Servidor
 
 ### Objetivo
 Explorar la estructura del servidor comprometido y obtener una vista general antes de la búsqueda de web shells.
@@ -144,7 +143,7 @@ cat /evidence/server-image/var/spool/cron/www-data
 
 ---
 
-## Ejercicio 2: Búsqueda Manual de Web Shells con grep (40 minutos)
+## Ejercicio 2: Búsqueda Manual de Web Shells con grep
 
 ### Contexto Teórico
 
@@ -237,7 +236,7 @@ strings /evidence/server-image/var/www/html/images/logo_corp_2026.php.jpg | grep
 
 ---
 
-## Ejercicio 3: Detección Automatizada con Herramientas (35 minutos)
+## Ejercicio 3: Detección Automatizada con Herramientas
 
 ### Paso 3.1: Ejecutar el scanner completo de web shells
 
@@ -308,7 +307,7 @@ python3 /investigation/tools/yara_scanner.py
 
 ---
 
-## Ejercicio 4: Análisis de Logs de Apache (35 minutos)
+## Ejercicio 4: Análisis de Logs de Apache
 
 ### Paso 4.1: Vista general del tráfico
 
@@ -382,7 +381,7 @@ cat /evidence/server-image/var/log/apache2/error.log
 
 ---
 
-## Ejercicio 5: Análisis Profundo de Cada Web Shell (30 minutos)
+## Ejercicio 5: Análisis Profundo de Cada Web Shell
 
 ### Web Shell 1: China Chopper (One-liner)
 
@@ -441,7 +440,7 @@ cat -n /evidence/server-image/var/www/html/cache/cache_manager.php | less
 
 ---
 
-## Ejercicio 6: Extracción de IOCs y Reporte Final (20 minutos)
+## Ejercicio 6: Extracción de IOCs y Reporte Final
 
 ### Paso 6.1: Extraer IOCs automáticamente
 
