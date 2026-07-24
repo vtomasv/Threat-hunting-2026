@@ -1,0 +1,86 @@
+# =============================================================================
+# CLASE 10 - Laboratorios Completos
+# MAR404 - Cacería de Amenazas (Threat Hunter)
+# Universidad Mayor 2026
+# =============================================================================
+#
+# Este archivo orquesta AMBOS laboratorios de la Clase 10:
+#   - Lab 19: Análisis Forense de Artefactos Windows (noVNC en puerto 6080)
+#   - Lab 20: Detección de Web Shells (noVNC en puerto 6081)
+#
+# Compatible con:
+#   - ARM64 (Apple Silicon M1/M2/M3/M4)
+#   - AMD64 (Intel/AMD - Windows/Linux)
+#
+# Uso:
+#   docker-compose up -d                    # Iniciar ambos labs
+#   docker-compose up -d lab19-forensic     # Solo Lab 19
+#   docker-compose up -d lab20-webshells    # Solo Lab 20
+#   docker-compose logs -f                  # Ver logs
+#   docker-compose down                     # Detener todo
+#
+# Acceso:
+#   Lab 19 (Forensic Artifacts): http://localhost:6080/vnc.html
+#   Lab 20 (Web Shells):         http://localhost:6081/vnc.html
+#   Password VNC (ambos):        hunter2026
+#
+# =============================================================================
+
+services:
+  # ─────────────────────────────────────────────────────────────────────────
+  # LAB 19: Análisis Forense de Artefactos Windows
+  # ─────────────────────────────────────────────────────────────────────────
+  lab19-forensic:
+    build:
+      context: ./lab19-forensic-artifacts
+      dockerfile: Dockerfile
+    container_name: lab19-forensic-workstation
+    hostname: ANALYST-WS-FORENSIC
+    ports:
+      - "6080:6080"
+      - "5901:5901"
+    environment:
+      - DISPLAY=:1
+      - VNC_PASSWORD=hunter2026
+      - CASE_ID=IR-2026-0715-001
+      - TARGET_HOST=SRV-FIN-01
+    mem_limit: 4g
+    cpus: 2.0
+    restart: unless-stopped
+    networks:
+      - clase10-net
+    labels:
+      - "com.mar404.lab=19"
+      - "com.mar404.clase=10"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # LAB 20: Detección de Web Shells
+  # ─────────────────────────────────────────────────────────────────────────
+  lab20-webshells:
+    build:
+      context: ./lab20-webshell-detection
+      dockerfile: Dockerfile
+    container_name: lab20-webshell-workstation
+    hostname: ANALYST-WS-WEBSHELL
+    ports:
+      - "6081:6080"
+      - "5902:5901"
+      - "8080:8080"
+    environment:
+      - DISPLAY=:1
+      - VNC_PASSWORD=hunter2026
+      - CASE_ID=IR-2026-0712-002
+      - TARGET_SERVER=webserver.corpfinance.local
+    mem_limit: 4g
+    cpus: 2.0
+    restart: unless-stopped
+    networks:
+      - clase10-net
+    labels:
+      - "com.mar404.lab=20"
+      - "com.mar404.clase=10"
+
+networks:
+  clase10-net:
+    name: clase10-network
+    driver: bridge

@@ -1,0 +1,57 @@
+# =============================================================================
+# Lab 19 - Análisis Forense de Artefactos Windows
+# Docker Compose - Compatible ARM64 (Apple Silicon) y AMD64 (Intel/Windows)
+# =============================================================================
+# 
+# Uso:
+#   docker-compose up -d          # Iniciar el laboratorio
+#   docker-compose logs -f        # Ver logs en tiempo real
+#   docker-compose down           # Detener y limpiar
+#
+# Acceso:
+#   noVNC: http://localhost:6080/vnc.html
+#   Password: hunter2026
+#
+# =============================================================================
+
+services:
+  forensic-workstation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lab19-forensic-workstation
+    hostname: ANALYST-WS
+    ports:
+      - "6080:6080"    # noVNC (acceso web al escritorio)
+      - "5901:5901"    # VNC directo (opcional)
+    environment:
+      - DISPLAY=:1
+      - VNC_PASSWORD=hunter2026
+      - CASE_ID=IR-2026-0715-001
+      - TARGET_HOST=SRV-FIN-01
+    volumes:
+      - forensic-evidence:/cases
+      - forensic-tools:/tools
+      - forensic-reports:/home/analyst/Documents/reports
+    mem_limit: 4g
+    cpus: 2.0
+    restart: unless-stopped
+    networks:
+      - forensic-net
+    labels:
+      - "com.mar404.lab=19"
+      - "com.mar404.course=threat-hunting"
+      - "com.mar404.description=Forensic Artifacts Analysis Workstation"
+
+volumes:
+  forensic-evidence:
+    name: lab19-evidence
+  forensic-tools:
+    name: lab19-tools
+  forensic-reports:
+    name: lab19-reports
+
+networks:
+  forensic-net:
+    name: lab19-network
+    driver: bridge

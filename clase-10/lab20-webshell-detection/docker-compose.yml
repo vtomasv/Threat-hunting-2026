@@ -1,0 +1,56 @@
+# =============================================================================
+# Lab 20 - Detección de Web Shells en Servidor Comprometido
+# Docker Compose - Compatible ARM64 (Apple Silicon) y AMD64 (Intel/Windows)
+# =============================================================================
+#
+# Uso:
+#   docker-compose up -d          # Iniciar el laboratorio
+#   docker-compose logs -f        # Ver logs en tiempo real
+#   docker-compose down           # Detener y limpiar
+#
+# Acceso:
+#   noVNC: http://localhost:6081/vnc.html
+#   Password: hunter2026
+#   Servidor web comprometido: http://localhost:8080
+#
+# =============================================================================
+
+services:
+  webshell-workstation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lab20-webshell-workstation
+    hostname: ANALYST-WS-02
+    ports:
+      - "6081:6080"    # noVNC (diferente puerto para no colisionar con lab19)
+      - "5902:5901"    # VNC directo
+      - "8080:8080"    # Apache con el sitio comprometido
+    environment:
+      - DISPLAY=:1
+      - VNC_PASSWORD=hunter2026
+      - CASE_ID=IR-2026-0712-002
+      - TARGET_SERVER=webserver.corpfinance.local
+    volumes:
+      - webshell-evidence:/evidence
+      - webshell-investigation:/investigation
+    mem_limit: 4g
+    cpus: 2.0
+    restart: unless-stopped
+    networks:
+      - webshell-net
+    labels:
+      - "com.mar404.lab=20"
+      - "com.mar404.course=threat-hunting"
+      - "com.mar404.description=Web Shell Detection Workstation"
+
+volumes:
+  webshell-evidence:
+    name: lab20-evidence
+  webshell-investigation:
+    name: lab20-investigation
+
+networks:
+  webshell-net:
+    name: lab20-network
+    driver: bridge
