@@ -68,7 +68,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ─────────────────────────────────────────────────────────────────────────────
 # FASE 2: Herramientas Python para detección de web shells
 # ─────────────────────────────────────────────────────────────────────────────
-RUN pip3 install --no-cache-dir --break-system-packages \
+RUN pip3 install --no-cache-dir \
     yara-python \
     colorama \
     tabulate \

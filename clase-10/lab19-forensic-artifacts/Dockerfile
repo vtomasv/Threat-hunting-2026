@@ -67,7 +67,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ─────────────────────────────────────────────────────────────────────────────
 # FASE 2: Instalación de herramientas Python para análisis forense
 # ─────────────────────────────────────────────────────────────────────────────
-RUN pip3 install --no-cache-dir --break-system-packages \
+RUN pip3 install --no-cache-dir \
     yara-python \
     pefile \
     lief \
