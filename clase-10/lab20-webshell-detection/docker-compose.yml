@@ -36,6 +36,8 @@ services:
       - webshell-investigation:/investigation
     mem_limit: 4g
     cpus: 2.0
+    security_opt:
+      - seccomp:unconfined
     restart: unless-stopped
     networks:
       - webshell-net

@@ -46,6 +46,8 @@ services:
       - TARGET_HOST=SRV-FIN-01
     mem_limit: 4g
     cpus: 2.0
+    security_opt:
+      - seccomp:unconfined
     restart: unless-stopped
     networks:
       - clase10-net
@@ -73,6 +75,8 @@ services:
       - TARGET_SERVER=webserver.corpfinance.local
     mem_limit: 4g
     cpus: 2.0
+    security_opt:
+      - seccomp:unconfined
     restart: unless-stopped
     networks:
       - clase10-net

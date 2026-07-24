@@ -10,7 +10,7 @@ FROM ubuntu:22.04
 
 LABEL maintainer="MAR404 - Threat Hunting Lab"
 LABEL description="Lab 19: Windows Forensic Artifacts Analysis with noVNC"
-LABEL version="2.0"
+LABEL version="2.1"
 
 # Evitar prompts interactivos durante la instalación
 ENV DEBIAN_FRONTEND=noninteractive
@@ -20,17 +20,16 @@ ENV TZ=America/Santiago
 # FASE 1: Instalación de paquetes base y escritorio XFCE ligero
 # ─────────────────────────────────────────────────────────────────────────────
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Escritorio XFCE4 ligero
     xfce4 \
     xfce4-terminal \
     dbus-x11 \
-    # VNC Server
+    x11-xserver-utils \
     tigervnc-standalone-server \
     tigervnc-common \
-    # noVNC (acceso web al escritorio)
+    tigervnc-tools \
     novnc \
     websockify \
-    # Herramientas de sistema
+    python3-websockify \
     sudo \
     curl \
     wget \
@@ -43,25 +42,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     htop \
     net-tools \
     iputils-ping \
-    # Herramientas forenses de línea de comandos
     xxd \
     hexedit \
     binutils \
     sleuthkit \
-    # Python y dependencias
     python3 \
     python3-pip \
-    python3-venv \
-    # Utilidades de análisis
     jq \
     sqlite3 \
     p7zip-full \
     unzip \
-    # Fuentes para el escritorio
     fonts-liberation \
     fonts-dejavu-core \
-    # Navegador ligero para documentación
     firefox \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -90,18 +84,14 @@ RUN useradd -m -s /bin/bash -G sudo analyst && \
 
 # ─────────────────────────────────────────────────────────────────────────────
 # FASE 4: Configuración de VNC y noVNC
+# La contraseña VNC se configura en el entrypoint para evitar problemas
+# con vncpasswd durante el build (no requiere TTY)
 # ─────────────────────────────────────────────────────────────────────────────
 RUN mkdir -p /home/analyst/.vnc && \
-    echo "hunter2026" | vncpasswd -f > /home/analyst/.vnc/passwd && \
-    chmod 600 /home/analyst/.vnc/passwd && \
     chown -R analyst:analyst /home/analyst/.vnc
 
-# Configuración de inicio de VNC
-RUN echo '#!/bin/bash\n\
-export DISPLAY=:1\n\
-unset SESSION_MANAGER\n\
-unset DBUS_SESSION_BUS_ADDRESS\n\
-exec startxfce4 &' > /home/analyst/.vnc/xstartup && \
+# Configuración de inicio de VNC (xstartup)
+RUN printf '#!/bin/bash\nexport DISPLAY=:1\nunset SESSION_MANAGER\nunset DBUS_SESSION_BUS_ADDRESS\nexec startxfce4 &\n' > /home/analyst/.vnc/xstartup && \
     chmod +x /home/analyst/.vnc/xstartup && \
     chown analyst:analyst /home/analyst/.vnc/xstartup
 

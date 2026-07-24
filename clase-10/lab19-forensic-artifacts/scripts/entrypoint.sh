@@ -13,6 +13,15 @@ echo "║  Universidad Mayor 2026                                            ║
 echo "╚══════════════════════════════════════════════════════════════════════╝"
 echo ""
 
+# ─── Configurar VNC password (en runtime, no en build) ───
+echo "[*] Configurando VNC..."
+mkdir -p /home/analyst/.vnc
+# tigervnc en Ubuntu 22.04 usa 'tigervncpasswd' (no 'vncpasswd')
+printf '%s\n%s\nn\n' "hunter2026" "hunter2026" | tigervncpasswd /home/analyst/.vnc/passwd 2>/dev/null || \
+    printf '%s\n%s\n\n' "hunter2026" "hunter2026" | vncpasswd /home/analyst/.vnc/passwd 2>/dev/null || true
+chmod 600 /home/analyst/.vnc/passwd 2>/dev/null || true
+chown -R analyst:analyst /home/analyst/.vnc
+
 # ─── Generar la evidencia forense del caso ───
 echo "[*] Generando artefactos forenses del caso SRV-FIN-01..."
 cd /opt/lab19/scripts
@@ -67,7 +76,13 @@ chown -R analyst:analyst /home/analyst /cases /tools
 
 # ─── Iniciar VNC Server ───
 echo "[*] Iniciando servidor VNC..."
-su - analyst -c "vncserver :1 -geometry 1280x800 -depth 24" 2>/dev/null
+# tigervnc en Ubuntu 22.04 usa 'tigervncserver' (no 'vncserver')
+su - analyst -c "tigervncserver :1 -geometry 1280x800 -depth 24 -localhost no" 2>/dev/null || \
+    su - analyst -c "tigervncserver :1 -geometry 1280x800 -depth 24" 2>/dev/null || \
+    su - analyst -c "vncserver :1 -geometry 1280x800 -depth 24" 2>/dev/null || true
+
+# Esperar a que VNC inicie
+sleep 2
 
 # ─── Iniciar noVNC ───
 echo "[*] Iniciando noVNC en puerto 6080..."
@@ -77,4 +92,10 @@ echo ""
 echo "[✓] Laboratorio listo. Esperando conexiones..."
 
 # websockify conecta noVNC al VNC server
-websockify --web=/usr/share/novnc/ 6080 localhost:5901
+# Buscar la ruta correcta de novnc
+NOVNC_PATH="/usr/share/novnc"
+if [ ! -d "$NOVNC_PATH" ]; then
+    NOVNC_PATH="/usr/share/noVNC"
+fi
+
+websockify --web="$NOVNC_PATH" 6080 localhost:5901

@@ -10,7 +10,7 @@ FROM ubuntu:22.04
 
 LABEL maintainer="MAR404 - Threat Hunting Lab"
 LABEL description="Lab 20: Web Shell Detection with noVNC"
-LABEL version="2.0"
+LABEL version="2.1"
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/Santiago
@@ -19,21 +19,19 @@ ENV TZ=America/Santiago
 # FASE 1: Instalación de paquetes base y escritorio XFCE
 # ─────────────────────────────────────────────────────────────────────────────
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Escritorio XFCE4 ligero
     xfce4 \
     xfce4-terminal \
     dbus-x11 \
-    # VNC Server
+    x11-xserver-utils \
     tigervnc-standalone-server \
     tigervnc-common \
-    # noVNC
+    tigervnc-tools \
     novnc \
     websockify \
-    # Servidor Web Apache + PHP (para simular el servidor comprometido)
+    python3-websockify \
     apache2 \
     php \
     libapache2-mod-php \
-    # Herramientas de sistema
     sudo \
     curl \
     wget \
@@ -47,22 +45,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     net-tools \
     iputils-ping \
     iproute2 \
-    # Herramientas de análisis
     jq \
     xxd \
     binutils \
-    # Python
     python3 \
     python3-pip \
-    python3-venv \
-    # Fuentes
     fonts-liberation \
     fonts-dejavu-core \
-    # Navegador
     firefox \
-    # ClamAV (antivirus para escaneo)
     clamav \
     clamav-daemon \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -74,8 +67,7 @@ RUN pip3 install --no-cache-dir \
     tabulate \
     rich \
     pandas \
-    requests \
-    netifaces
+    requests
 
 # ─────────────────────────────────────────────────────────────────────────────
 # FASE 3: Configuración del usuario analista
@@ -86,17 +78,14 @@ RUN useradd -m -s /bin/bash -G sudo analyst && \
 
 # ─────────────────────────────────────────────────────────────────────────────
 # FASE 4: Configuración de VNC y noVNC
+# La contraseña VNC se configura en el entrypoint para evitar problemas
+# con vncpasswd durante el build
 # ─────────────────────────────────────────────────────────────────────────────
 RUN mkdir -p /home/analyst/.vnc && \
-    echo "hunter2026" | vncpasswd -f > /home/analyst/.vnc/passwd && \
-    chmod 600 /home/analyst/.vnc/passwd && \
     chown -R analyst:analyst /home/analyst/.vnc
 
-RUN echo '#!/bin/bash\n\
-export DISPLAY=:1\n\
-unset SESSION_MANAGER\n\
-unset DBUS_SESSION_BUS_ADDRESS\n\
-exec startxfce4 &' > /home/analyst/.vnc/xstartup && \
+# Configuración de inicio de VNC (xstartup)
+RUN printf '#!/bin/bash\nexport DISPLAY=:1\nunset SESSION_MANAGER\nunset DBUS_SESSION_BUS_ADDRESS\nexec startxfce4 &\n' > /home/analyst/.vnc/xstartup && \
     chmod +x /home/analyst/.vnc/xstartup && \
     chown analyst:analyst /home/analyst/.vnc/xstartup
 
